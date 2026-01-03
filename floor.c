@@ -170,7 +170,7 @@ void floor_build_walls(Floor *f) {
 void floor_reveal_area(Floor *f, int x, int y, int radius) {
     for (int dy = -radius; dy <= radius; dy++) {
         for (int dx = -radius; dx <= radius; dx++) {
-            if(dx*dx + dy*dy <= radius*radius) {
+            if (dx * dx + dy * dy <= radius * radius) {
                 int nx = x + dx;
                 int ny = y + dy;
                 if (in_bounds(f, nx, ny)) {
@@ -181,27 +181,4 @@ void floor_reveal_area(Floor *f, int x, int y, int radius) {
     }
 }
 
-Renderable tile_glyph(Floor *f, int x, int y) {
-    switch (tile_at(f, x, y)) {
-    case TILE_VOID:
-        return (Renderable){.glyph = ' ', .color_pair = COLOR_VOID};
-    case TILE_FLOOR:
-        return (Renderable){.glyph = '.', .color_pair = COLOR_FLOOR};
-    case TILE_ROAD:
-        return (Renderable){.glyph = ' ', .color_pair = COLOR_ROAD};
-    case TILE_WALL:
-        switch (f->walls[x + f->width * y]) {
-        case WALL_VERTICAL:
-            return (Renderable){.glyph = '|', .color_pair = COLOR_WALL};
-        case WALL_HORIZONTAL:
-            return (Renderable){.glyph = '_', .color_pair = COLOR_WALL};
-        case WALL_CORNER:
-            return (Renderable){.glyph = '+', .color_pair = COLOR_WALL};
-        default:
-            return (Renderable){.glyph = '?', .color_pair = COLOR_UNKNOWN};
-        }
-    default:
-        return (Renderable){.glyph = '?', .color_pair = COLOR_UNKNOWN};
-    }
-}
 #endif // _FLOOR_C

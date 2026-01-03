@@ -13,6 +13,30 @@
 #define MAP_W (120)
 #define MAP_H (24)
 
+Renderable tile_glyph(Floor *f, int x, int y) {
+    switch (tile_at(f, x, y)) {
+    case TILE_VOID:
+        return (Renderable){.glyph = ' ', .color_pair = COLOR_VOID};
+    case TILE_FLOOR:
+        return (Renderable){.glyph = '.', .color_pair = COLOR_FLOOR};
+    case TILE_ROAD:
+        return (Renderable){.glyph = ' ', .color_pair = COLOR_ROAD};
+    case TILE_WALL:
+        switch (f->walls[x + f->width * y]) {
+        case WALL_VERTICAL:
+            return (Renderable){.glyph = '|', .color_pair = COLOR_WALL};
+        case WALL_HORIZONTAL:
+            return (Renderable){.glyph = '_', .color_pair = COLOR_WALL};
+        case WALL_CORNER:
+            return (Renderable){.glyph = '+', .color_pair = COLOR_WALL};
+        default:
+            return (Renderable){.glyph = '?', .color_pair = COLOR_UNKNOWN};
+        }
+    default:
+        return (Renderable){.glyph = '?', .color_pair = COLOR_UNKNOWN};
+    }
+}
+
 void draw(Floor *f) {
     for (int y = 0; y < f->height; y++) {
         for (int x = 0; x < f->width; x++) {
@@ -65,7 +89,7 @@ int main() {
     keypad(stdscr, true);
 
     while (true) {
-        clear();
+        erase();
 
         draw(&f);
         system_render(&world);
