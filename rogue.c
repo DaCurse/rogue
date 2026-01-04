@@ -5,6 +5,7 @@
 #include <time.h>
 
 #include "color.c"
+#include "draw.c"
 #include "ecs.c"
 #include "floor.c"
 #include "systems.c"
@@ -16,65 +17,19 @@
 
 #define MAX_ROOMS (8)
 
-Renderable tile_glyph(Floor *f, int x, int y) {
-    switch (tile_at(f, x, y)) {
-    case TILE_VOID:
-        return (Renderable){.glyph = ' ', .color_pair = COLOR_VOID};
-    case TILE_FLOOR:
-        return (Renderable){.glyph = '.', .color_pair = COLOR_FLOOR};
-    case TILE_ROAD:
-        return (Renderable){.glyph = ' ', .color_pair = COLOR_ROAD};
-    case TILE_WALL:
-        switch (f->walls[x + f->width * y]) {
-        case WALL_VERTICAL:
-            return (Renderable){.glyph = '|', .color_pair = COLOR_WALL};
-        case WALL_HORIZONTAL:
-            return (Renderable){.glyph = '_', .color_pair = COLOR_WALL};
-        case WALL_CORNER:
-            return (Renderable){.glyph = '+', .color_pair = COLOR_WALL};
-        default:
-            return (Renderable){.glyph = '?', .color_pair = COLOR_UNKNOWN};
-        }
-    default:
-        return (Renderable){.glyph = '?', .color_pair = COLOR_UNKNOWN};
+WINDOW *create_window(int h, int w, int y, int x) {
+    WINDOW *win = newwin(h, w, y, x);
+    if (win == NULL) {
+        endwin();
+        fprintf(stderr, "Error: Window creation failed at %d,%d (%dx%d).\n", y,
+                x, w, h);
+        exit(1);
     }
-}
-
-void draw_map(WINDOW *win, Floor *f, World *w) {
-    werase(win);
-
-    for (int y = 0; y < f->height; y++) {
-        for (int x = 0; x < f->width; x++) {
-            if (!f->fog_of_war[x + f->width * y])
-                continue;
-
-            Renderable r = tile_glyph(f, x, y);
-            mvwaddch(win, y, x, r.glyph | COLOR_PAIR(r.color_pair));
-        }
-    }
-
-    system_render(win, w);
-
-    wrefresh(win);
-}
-
-void draw_status_bar(WINDOW *win) {
-    werase(win);
-
-    wbkgd(win, COLOR_PAIR(COLOR_STATUS));
-    mvwprintw(win, 0, 1, "Level: 1 Floor: 1 Gold: 0");
-
-    wrefresh(win);
-}
-
-void draw_logs(WINDOW *win) {
-    werase(win);
-    box(win, 0, 0);
-    mvwprintw(win, 0, 2, " Journal ");
-    wrefresh(win);
+    return win;
 }
 
 int main() {
+    // Create game objects
     Tile tiles[MAP_H * MAP_W];
     WallType walls[MAP_H * MAP_W];
     bool fog_of_war[MAP_H * MAP_W] = {0};
@@ -106,11 +61,20 @@ int main() {
     world_add_renderable(&world, player, player_render);
     floor_reveal_area(&floor, starting_pos.x, starting_pos.y, 5);
 
+    // Initialize ncurses
     initscr();
 
-    WINDOW *map_win = newwin(floor.height, floor.width, 0, 0);
-    WINDOW *log_win = newwin(floor.height, LOG_W, 0, floor.width);
-    WINDOW *status_win = newwin(STATUS_H, floor.width + LOG_W, floor.height, 0);
+    if (LINES < MAP_H + STATUS_H || COLS < MAP_W + LOG_W) {
+        endwin();
+        fprintf(stderr, "Terminal too small: %dx%d\n", COLS, LINES);
+        fprintf(stderr, "Required: %dx%d\n", MAP_W + LOG_W, MAP_H + STATUS_H);
+        return 1;
+    }
+
+    WINDOW *map_win = create_window(floor.height, floor.width, 0, 0);
+    WINDOW *log_win = create_window(floor.height, LOG_W, 0, floor.width);
+    WINDOW *status_win =
+        create_window(STATUS_H, floor.width + LOG_W, floor.height, 0);
 
     keypad(map_win, true);
     init_colors();
@@ -118,6 +82,7 @@ int main() {
     cbreak();
     curs_set(0);
 
+    // Main game loop
     while (true) {
         draw_map(map_win, &floor, &world);
         draw_status_bar(status_win);
