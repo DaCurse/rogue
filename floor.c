@@ -1,9 +1,6 @@
 #ifndef _FLOOR_C
 #define _FLOOR_C
 
-#include "color.c"
-#include "ecs.c"
-
 typedef enum { TILE_VOID, TILE_WALL, TILE_FLOOR, TILE_ROAD } Tile;
 
 typedef enum {

@@ -6,7 +6,7 @@
 #include "ecs.c"
 #include "floor.c"
 
-void system_render(World *w) {
+void system_render(WINDOW *win, World *w) {
     for (int e = 0; e < w->count; e++) {
         if (!(w->has_position[e] && w->has_renderable[e]))
             continue;
@@ -14,7 +14,7 @@ void system_render(World *w) {
         Position *p = &w->positions[e];
         Renderable *r = &w->renderables[e];
 
-        mvaddch(p->y, p->x, r->glyph | COLOR_PAIR(r->color_pair));
+        mvwaddch(win, p->y, p->x, r->glyph | COLOR_PAIR(r->color_pair));
     }
 }
 

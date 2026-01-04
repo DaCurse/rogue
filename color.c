@@ -9,6 +9,7 @@
 #define COLOR_FLOOR (2)
 #define COLOR_ROAD (3)
 #define COLOR_PLAYER (4)
+#define COLOR_STATUS (5)
 
 void init_colors() {
     assert(has_colors());
@@ -22,6 +23,7 @@ void init_colors() {
     init_pair(COLOR_FLOOR, COLOR_GREEN, COLOR_BLACK);
     init_pair(COLOR_ROAD, COLOR_GRAY, COLOR_GRAY);
     init_pair(COLOR_PLAYER, COLOR_WHITE, COLOR_GREEN);
+    init_pair(COLOR_STATUS, COLOR_WHITE, COLOR_YELLOW);
 }
 
 #endif // _COLOR_C
