@@ -63,6 +63,7 @@ int main() {
 
     // Initialize ncurses
     initscr();
+    init_colors();
 
     if (LINES < MAP_H + STATUS_H || COLS < MAP_W + LOG_W) {
         endwin();
@@ -77,7 +78,6 @@ int main() {
         create_window(STATUS_H, floor.width + LOG_W, floor.height, 0);
 
     keypad(map_win, true);
-    init_colors();
     noecho();
     cbreak();
     curs_set(0);
