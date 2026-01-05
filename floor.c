@@ -1,6 +1,8 @@
 #ifndef _FLOOR_C
 #define _FLOOR_C
 
+#include <stdbool.h>
+
 typedef enum { TILE_VOID, TILE_WALL, TILE_FLOOR, TILE_ROAD } Tile;
 
 typedef enum {
@@ -108,10 +110,14 @@ void floor_generate_rooms(Floor *f, int room_min_size, int room_max_size) {
             continue;
 
         carve_room(f, r);
-        if (f->room_count < 2)
-            continue;
+    }
+}
 
-        Room prev = f->rooms[f->room_count - 2];
+void floor_connect_rooms(Floor *f) {
+    for (int i = 1; i < f->room_count; i++) {
+        Room r = f->rooms[i];
+        Room prev = f->rooms[i - 1];
+
         int x1 = r.x + r.w / 2;
         int y1 = r.y + r.h / 2;
         int x2 = prev.x + prev.w / 2;

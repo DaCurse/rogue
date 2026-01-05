@@ -10,6 +10,7 @@
 #define COLOR_ROAD (3)
 #define COLOR_PLAYER (4)
 #define COLOR_STATUS (5)
+#define COLOR_ENEMY (6)
 
 static short custom_color = COLOR_WHITE;
 static short COLOR_GRAY;
@@ -33,6 +34,7 @@ void init_colors() {
     init_pair(COLOR_ROAD, COLOR_GRAY, COLOR_GRAY);
     init_pair(COLOR_PLAYER, COLOR_WHITE, COLOR_GREEN);
     init_pair(COLOR_STATUS, COLOR_WHITE, COLOR_YELLOW);
+    init_pair(COLOR_ENEMY, COLOR_WHITE, COLOR_RED);
 }
 
 #endif // _COLOR_C
