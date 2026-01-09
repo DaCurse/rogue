@@ -40,5 +40,7 @@ void floor_generate_rooms(Floor *f, int room_min_size, int room_max_size);
 void floor_connect_rooms(Floor *f);
 void floor_build_walls(Floor *f);
 void floor_reveal_area(Floor *f, int x, int y, int radius);
+int floor_find_room(Floor *f, int x, int y);
+void floor_reveal_room(Floor *f, int room_index);
 
 #endif // FLOOR_H

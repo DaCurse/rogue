@@ -22,7 +22,6 @@
 #define LOG_W (40)
 
 #define MAX_ROOMS (10)
-#define PLAYER_LIGHT_RADIUS (8)
 
 WINDOW *create_window(int h, int w, int y, int x) {
     WINDOW *win = newwin(h, w, y, x);
@@ -40,7 +39,7 @@ WINDOW *create_window(int h, int w, int y, int x) {
 void create_player(World *world, Floor *floor) {
     Entity player = world_create_entity(world);
     world->player = player;
-    world->player_data = (Player){.light_radius = PLAYER_LIGHT_RADIUS};
+    world->player_data = (Player){};
 
     Room first_room = floor->rooms[0];
     Position starting_pos = {
@@ -59,8 +58,8 @@ void create_player(World *world, Floor *floor) {
                                .defense = 0,
                            });
 
-    floor_reveal_area(floor, starting_pos.x, starting_pos.y,
-                      world->player_data.light_radius);
+    // Reveal the starting room
+    floor_reveal_room(floor, 0);
 }
 
 Entity create_enemy(World *world, Floor *floor) {

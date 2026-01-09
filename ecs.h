@@ -25,7 +25,6 @@ typedef struct {
 } Renderable;
 
 typedef struct {
-    int light_radius;
 } Player;
 
 typedef struct {

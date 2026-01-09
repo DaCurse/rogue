@@ -154,3 +154,28 @@ void floor_reveal_area(Floor *f, int x, int y, int radius) {
         }
     }
 }
+
+int floor_find_room(Floor *f, int x, int y) {
+    for (int i = 0; i < f->room_count; i++) {
+        Room *r = &f->rooms[i];
+        if (x >= r->x && x < r->x + r->w && y >= r->y && y < r->y + r->h) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void floor_reveal_room(Floor *f, int room_index) {
+    if (room_index < 0 || room_index >= f->room_count)
+        return;
+
+    Room *r = &f->rooms[room_index];
+
+    for (int y = r->y - 1; y <= r->y + r->h; y++) {
+        for (int x = r->x - 1; x <= r->x + r->w; x++) {
+            if (in_bounds(f, x, y)) {
+                f->fog_of_war[x + f->width * y] = true;
+            }
+        }
+    }
+}

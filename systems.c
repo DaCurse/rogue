@@ -147,11 +147,17 @@ void system_movement(World *w) {
             p->y = new_y;
 
             if (e == w->player) {
-                // Reveal less area if on road
-                int light_radius = tile_at(w->floor, p->x, p->y) == TILE_ROAD
-                                       ? 1
-                                       : w->player_data.light_radius;
-                floor_reveal_area(w->floor, p->x, p->y, light_radius);
+                Tile current_tile = tile_at(w->floor, p->x, p->y);
+                if (current_tile == TILE_ROAD) {
+                    // On road: reveal only immediate surroundings (radius 1)
+                    floor_reveal_area(w->floor, p->x, p->y, 1);
+                } else if (current_tile == TILE_FLOOR) {
+                    // In room: reveal the entire room
+                    int room_idx = floor_find_room(w->floor, p->x, p->y);
+                    if (room_idx >= 0) {
+                        floor_reveal_room(w->floor, room_idx);
+                    }
+                }
             }
             break;
 
