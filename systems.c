@@ -1,11 +1,7 @@
-#ifndef SYSTEMS_C
-#define SYSTEMS_C
-
 #include <ncurses.h>
 
-#include "color.c"
-#include "ecs.c"
-#include "floor.c"
+#include "color.h"
+#include "systems.h"
 
 void system_render_map(World *w) {
     werase(w->map.win);
@@ -223,5 +219,3 @@ void system_death(World *w) {
         }
     }
 }
-
-#endif // SYSTEMS_C

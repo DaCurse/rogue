@@ -1,33 +1,4 @@
-#ifndef _FLOOR_C
-#define _FLOOR_C
-
-#include <stdbool.h>
-
-typedef enum { TILE_VOID, TILE_WALL, TILE_FLOOR, TILE_ROAD } Tile;
-
-typedef enum {
-    WALL_UNSET,
-    WALL_HORIZONTAL,
-    WALL_VERTICAL,
-    WALL_CORNER
-} WallType;
-
-typedef struct {
-    int x, y;
-    int w, h;
-} Room;
-
-typedef struct {
-    int width, height;
-
-    Tile *tiles;
-    WallType *walls;
-    bool *fog_of_war;
-
-    int room_count;
-    int max_rooms;
-    Room *rooms;
-} Floor;
+#include "floor.h"
 
 bool in_bounds(Floor *f, int x, int y) {
     return x >= 0 && y >= 0 && x < f->width && y < f->height;
@@ -183,5 +154,3 @@ void floor_reveal_area(Floor *f, int x, int y, int radius) {
         }
     }
 }
-
-#endif // _FLOOR_C

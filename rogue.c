@@ -1,8 +1,15 @@
 #include <assert.h>
+#include <ctype.h>
 #include <ncurses.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
+
+#include "color.h"
+#include "ecs.h"
+#include "floor.h"
+#include "systems.h"
 
 #include "color.c"
 #include "ecs.c"
@@ -25,6 +32,8 @@ WINDOW *create_window(int h, int w, int y, int x) {
                 x, w, h);
         exit(1);
     }
+    // Set window background to black
+    wbkgd(win, COLOR_PAIR(COLOR_VOID));
     return win;
 }
 
