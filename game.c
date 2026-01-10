@@ -7,8 +7,9 @@
 void create_player(World *world) {
     Entity player = world_create_entity(world);
     world->player = player;
-    world->player_data = (Player){
+    world->player_data = (PlayerData){
         .room_id = 0,
+        .floor = 0,
     };
 
     Renderable player_render = {.glyph = '@', .color_pair = COLOR_PAIR_PLAYER};
@@ -73,6 +74,7 @@ void add_room_exit(World *world) {
 }
 
 void setup_new_level(World *w) {
+    w->player_data.floor++;
     // Reinitialize the floor
     floor_fill_void(w->floor);
     floor_generate_rooms(w->floor, ROOM_MIN_SIZE, ROOM_MAX_SIZE);
@@ -105,7 +107,7 @@ void setup_new_level(World *w) {
         .y = first_room->y + random_int(1, first_room->h - 2),
     };
 
-    // Ensure player has position component 
+    // Ensure player has position component
     world_add_position(w, w->player, player_pos_start);
 
     // Reveal starting room

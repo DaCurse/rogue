@@ -29,7 +29,8 @@ typedef struct {
 
 typedef struct {
     int room_id;
-} Player;
+    int floor;
+} PlayerData;
 
 typedef struct {
     char name[16];
@@ -71,7 +72,7 @@ typedef struct {
     Entity room_exit;
 
     Entity player;
-    Player player_data;
+    PlayerData player_data;
 
     char log_message[LOG_MESSAGE_SIZE];
     int log_repeat_count;

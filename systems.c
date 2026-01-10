@@ -91,8 +91,8 @@ void system_render_status_bar(World *w) {
     CombatStats *cs = &w->combat_stats[w->player];
 
     wbkgd(w->status_bar.win, COLOR_PAIR(COLOR_PAIR_STATUS));
-    mvwprintw(w->status_bar.win, 0, 1, "Level: 1 Floor: 1 HP: %d/%d Seed: %u",
-              cs->hp, cs->max_hp, w->seed);
+    mvwprintw(w->status_bar.win, 0, 1, "Level: 1 Floor: %d HP: %d/%d Seed: %u",
+              w->player_data.floor, cs->hp, cs->max_hp, w->seed);
 
     wrefresh(w->status_bar.win);
 }
@@ -268,7 +268,7 @@ void system_exit_room(World *w) {
     if (ce->target == w->room_exit) {
         // Player collided with room exit
         w->has_collision_event[w->player] = false;
-        world_logf(w, "You exit the room.");
+        world_logf(w, "You descend deeper into the dungeon.");
 
         setup_new_level(w);
     }
