@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include "config.h"
 #include "floor.h"
 #include "utils.h"
 

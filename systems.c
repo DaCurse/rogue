@@ -1,7 +1,9 @@
 #include <ncurses.h>
+#include <stdio.h>
 
 #include "color.h"
 #include "systems.h"
+#include "utils.h"
 
 void system_render_map(World *w) {
     werase(w->map.win);
@@ -38,14 +40,17 @@ void system_render_map(World *w) {
 void system_render_logs(World *w) {
     werase(w->log_window.win);
 
-    box(w->log_window.win, 0, 0);
-    mvwprintw(w->log_window.win, 0, 2, " Journal ");
-    int max_logs = getmaxy(w->log_window.win) - 2;
-    int start_idx = (w->log_count > max_logs) ? w->log_count - max_logs : 0;
+    if (w->log_message[0]) {
+        if (w->log_repeat_count > 1) {
+            char suffix[32];
+            snprintf(suffix, sizeof(suffix), " (x%d)", w->log_repeat_count);
 
-    for (int i = 0; i < max_logs && start_idx + i < w->log_count; i++) {
-        mvwprintw(w->log_window.win, i + 1, 1, "%s",
-                  w->log_entries[start_idx + i].log_message);
+            int max_msg_len = LOG_MESSAGE_SIZE - strlen(suffix) - 1;
+            mvwprintw(w->log_window.win, 0, 0, " %.*s%s", max_msg_len,
+                      w->log_message, suffix);
+        } else {
+            mvwprintw(w->log_window.win, 0, 0, " %s", w->log_message);
+        }
     }
 
     wrefresh(w->log_window.win);
@@ -169,6 +174,32 @@ void system_movement(World *w) {
     }
 }
 
+static void log_combat_event(World *w, const char *attacker,
+                             const char *defender, int damage_dealt,
+                             int damage_taken) {
+    char attack_msg[128];
+    if (damage_dealt > 0) {
+        snprintf(attack_msg, sizeof(attack_msg),
+                 "The %s strikes the %s for %d damage!", attacker, defender,
+                 damage_dealt);
+    } else {
+        snprintf(attack_msg, sizeof(attack_msg),
+                 "The %s strikes the %s but the attack is blocked!", attacker,
+                 defender);
+    }
+
+    char counter_msg[128];
+    if (damage_taken > 0) {
+        snprintf(counter_msg, sizeof(counter_msg),
+                 "The %s counters, dealing %d damage.", defender, damage_taken);
+    } else {
+        snprintf(counter_msg, sizeof(counter_msg),
+                 "The %s counters but deals no damage.", defender);
+    }
+
+    world_logf(w, "%s %s", attack_msg, counter_msg);
+}
+
 void system_combat(World *w) {
     for (int e = 0; e < w->count; e++) {
         if (!(w->has_combat_intent[e] && w->has_combat_stats[e]))
@@ -179,27 +210,15 @@ void system_combat(World *w) {
         CombatStats *defender_stats = &w->combat_stats[ci->defender];
 
         int damage_to_defender =
-            attacker_stats->attack > defender_stats->defense
-                ? attacker_stats->attack - defender_stats->defense
-                : 1;
+            MAX(0, attacker_stats->attack - defender_stats->defense);
         int damage_to_attacker =
-            defender_stats->attack > attacker_stats->defense
-                ? defender_stats->attack - attacker_stats->defense
-                : 1;
+            MAX(0, defender_stats->attack - attacker_stats->defense);
 
         defender_stats->hp -= damage_to_defender;
         attacker_stats->hp -= damage_to_attacker;
 
-        // TODO: Rework logging system
-        char log_msg[256];
-        snprintf(log_msg, sizeof(log_msg), "%s attacked %s for %d damage\n",
-                 attacker_stats->name, defender_stats->name,
-                 damage_to_defender);
-        world_add_log_entry(w, log_msg);
-        snprintf(log_msg, sizeof(log_msg), "%s retaliated %s for %d damage\n",
-                 defender_stats->name, attacker_stats->name,
-                 damage_to_attacker);
-        world_add_log_entry(w, log_msg);
+        log_combat_event(w, attacker_stats->name, defender_stats->name,
+                         damage_to_defender, damage_to_attacker);
 
         w->has_combat_intent[e] = false;
     }
@@ -212,10 +231,7 @@ void system_death(World *w) {
 
         CombatStats *cs = &w->combat_stats[e];
         if (cs->hp <= 0) {
-            char log_msg[256];
-            snprintf(log_msg, sizeof(log_msg), "%s has been defeated!\n",
-                     cs->name);
-            world_add_log_entry(w, log_msg);
+            world_logf(w, "The %s dies.", cs->name);
 
             // Remove all components (entity cleanup)
             w->has_position[e] = false;

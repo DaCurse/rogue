@@ -7,23 +7,18 @@
 #include <time.h>
 
 #include "color.h"
-#include "ecs.h"
 #include "floor.h"
 #include "systems.h"
 #include "utils.h"
+#include "world.h"
 
 #include "color.c"
-#include "ecs.c"
 #include "floor.c"
 #include "systems.c"
 #include "utils.c"
+#include "world.c"
 
-#define MAP_W (116)
-#define MAP_H (36)
-#define STATUS_H (1)
-#define LOG_W (40)
-
-#define MAX_ROOMS (10)
+#include "config.h"
 
 WINDOW *create_window(int h, int w, int y, int x) {
     WINDOW *win = newwin(h, w, y, x);
@@ -62,7 +57,6 @@ void create_player(World *world, Floor *floor) {
 
     // Reveal the starting room
     floor_reveal_room(floor, 0);
-    floor_reveal_area(floor, 0, 0, 200);
 }
 
 Entity create_enemy(World *world, Floor *floor) {
@@ -115,7 +109,7 @@ int main(int argc, char **argv) {
                    .rooms = rooms};
 
     floor_fill_void(&floor);
-    floor_generate_rooms(&floor, 8, 20);
+    floor_generate_rooms(&floor, ROOM_MIN_SIZE, ROOM_MAX_SIZE);
     floor_build_walls(&floor);
     floor_connect_rooms(&floor);
 
@@ -123,17 +117,17 @@ int main(int argc, char **argv) {
     initscr();
     init_colors();
 
-    if (LINES < MAP_H + STATUS_H || COLS < MAP_W + LOG_W) {
+    if (LINES < MAP_H + STATUS_H + LOG_H || COLS < MAP_W) {
         endwin();
         fprintf(stderr, "Terminal too small: %dx%d\n", COLS, LINES);
-        fprintf(stderr, "Required: %dx%d\n", MAP_W + LOG_W, MAP_H + STATUS_H);
+        fprintf(stderr, "Required: %dx%d\n", MAP_W, MAP_H + STATUS_H + LOG_H);
         return 1;
     }
 
-    WINDOW *map_win = create_window(floor.height, floor.width, 0, 0);
-    WINDOW *log_win = create_window(floor.height, LOG_W, 0, floor.width);
+    WINDOW *log_win = create_window(LOG_H, floor.width, 0, 0);
+    WINDOW *map_win = create_window(floor.height, floor.width, LOG_H, 0);
     WINDOW *status_win =
-        create_window(STATUS_H, floor.width + LOG_W, floor.height, 0);
+        create_window(STATUS_H, floor.width, floor.height + LOG_H, 0);
 
     keypad(map_win, true);
     noecho();

@@ -1,4 +1,7 @@
-#include "ecs.h"
+#include "world.h"
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "color.h"
 
@@ -40,19 +43,19 @@ void world_add_combat_intent(World *w, Entity e, CombatIntent ci) {
     w->has_combat_intent[e] = true;
 }
 
-void world_add_log_entry(World *w, const char *message) {
-    if (w->log_count < MAX_ENTITIES) {
-        strncpy(w->log_entries[w->log_count].log_message, message, 255);
-        w->log_entries[w->log_count].log_message[255] = '\0';
-        w->log_count++;
+void world_logf(World *w, const char *format, ...) {
+    char buffer[LOG_MESSAGE_SIZE];
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+
+    if (strncmp(buffer, w->log_message, LOG_MESSAGE_SIZE) == 0) {
+        w->log_repeat_count++;
     } else {
-        // Shift all entries up by one (remove oldest)
-        for (int i = 0; i < MAX_ENTITIES - 1; i++) {
-            w->log_entries[i] = w->log_entries[i + 1];
-        }
-        // Add new entry at the end
-        strncpy(w->log_entries[MAX_ENTITIES - 1].log_message, message, 255);
-        w->log_entries[MAX_ENTITIES - 1].log_message[255] = '\0';
+        w->log_repeat_count = 1;
+        strncpy(w->log_message, buffer, LOG_MESSAGE_SIZE - 1);
+        w->log_message[LOG_MESSAGE_SIZE - 1] = '\0';
     }
 }
 

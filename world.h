@@ -1,12 +1,14 @@
-#ifndef ECS_H
-#define ECS_H
+#ifndef WORLD_H
+#define WORLD_H
 
 #include <ncurses.h>
 #include <stdbool.h>
 
+#include "config.h"
 #include "floor.h"
 
 #define MAX_ENTITIES (128)
+#define LOG_MESSAGE_SIZE (MAP_W)
 #define INVALID_ENTITY (-1)
 
 typedef int Entity;
@@ -55,10 +57,6 @@ typedef struct {
 } CombatIntent;
 
 typedef struct {
-    char log_message[256];
-} LogEntry;
-
-typedef struct {
     unsigned int seed;
     Floor *floor;
     RenderContext map;
@@ -71,15 +69,15 @@ typedef struct {
     Entity player;
     Player player_data;
 
+    char log_message[LOG_MESSAGE_SIZE];
+    int log_repeat_count;
+
     Position positions[MAX_ENTITIES];
     Renderable renderables[MAX_ENTITIES];
     CombatStats combat_stats[MAX_ENTITIES];
     Collider colliders[MAX_ENTITIES];
     MoveIntent move_intents[MAX_ENTITIES];
     CombatIntent combat_intents[MAX_ENTITIES];
-
-    int log_count;
-    LogEntry log_entries[MAX_ENTITIES];
 
     bool has_position[MAX_ENTITIES];
     bool has_renderable[MAX_ENTITIES];
@@ -96,7 +94,7 @@ void world_add_combat_stats(World *w, Entity e, CombatStats cs);
 void world_add_collider(World *w, Entity e, Collider c);
 void world_add_move_intent(World *w, Entity e, MoveIntent mi);
 void world_add_combat_intent(World *w, Entity e, CombatIntent ci);
-void world_add_log_entry(World *w, const char *message);
+void world_logf(World *w, const char *format, ...);
 Renderable tile_glyph(Floor *f, int x, int y);
 
-#endif // ECS_H
+#endif // WORLD_H

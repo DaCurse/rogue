@@ -1,7 +1,7 @@
 #ifndef SYSTEMS_H
 #define SYSTEMS_H
 
-#include "ecs.h"
+#include "world.h"
 
 void system_render_map(World *w);
 void system_render_logs(World *w);
