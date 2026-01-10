@@ -2,6 +2,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "color.h"
@@ -31,9 +32,30 @@ Entity world_create_entity(World *w) {
     return e;
 }
 
+static void world_remove_entity_from_spatial_index(World *w, Entity e) {
+    if (!w->has[e].position)
+        return;
+
+    Position pos = w->positions[e];
+    int x = pos.x, y = pos.y;
+    if (in_bounds(w->floor, x, y) && w->entity_at[y][x] == e) {
+        w->entity_at[y][x] = INVALID_ENTITY;
+    }
+}
+
 void world_add_position(World *w, Entity e, Position pos) {
+    if (!in_bounds(w->floor, pos.x, pos.y)) {
+        fprintf(stderr,
+                "Error: Attempted to add position out of bounds (%d, %d)\n",
+                pos.x, pos.y);
+        abort();
+    }
+
+    world_remove_entity_from_spatial_index(w, e);
+
     w->positions[e] = pos;
     w->has[e].position = true;
+    w->entity_at[pos.y][pos.x] = e;
 
     if (w->has[e].renderable) {
         add_to_list(w->render_list, &w->render_list_count, e);
@@ -88,17 +110,7 @@ void world_remove_entity(World *w, Entity e) {
     memset(&w->has[e], 0, sizeof(ComponentFlags));
     remove_from_list(w->render_list, &w->render_list_count, e);
     remove_from_list(w->combatants, &w->combatants_count, e);
-}
-
-bool world_is_occupied(World *w, int x, int y) {
-    for (int e = 0; e < w->count; e++) {
-        if (!w->has[e].position)
-            continue;
-        if (w->positions[e].x == x && w->positions[e].y == y) {
-            return true;
-        }
-    }
-    return false;
+    world_remove_entity_from_spatial_index(w, e);
 }
 
 int world_get_unoccupied_positions(World *w, Room *r, Position *out_arr,
@@ -106,7 +118,7 @@ int world_get_unoccupied_positions(World *w, Room *r, Position *out_arr,
     int count = 0;
     for (int y = r->y + 1; y < r->y + r->h - 1; y++) {
         for (int x = r->x + 1; x < r->x + r->w - 1; x++) {
-            if (world_is_occupied(w, x, y))
+            if (w->entity_at[y][x] != INVALID_ENTITY)
                 continue;
 
             if (count < max_len) {

@@ -147,18 +147,13 @@ static CollisionResult check_collision(World *w, Floor *f, Entity e1,
                                  .entity = INVALID_ENTITY};
     }
 
+    // Position is guaranteed to be in bounds because of tile_at call
+
     // Entity collision
-    FOR_EACH_ENTITY_IF2(w, e2, position, collider) {
-        if (e1 == e2)
-            continue;
-
-        Position *p2 = &w->positions[e2];
-        Collider *c2 = &w->colliders[e2];
-
-        if (c2->blocks_movement && p2->x == target_x && p2->y == target_y) {
-            CollisionResult result = {.type = COLLISION_ENTITY, .entity = e2};
-            return result;
-        }
+    Entity e2 = w->entity_at[target_y][target_x];
+    if (e2 != INVALID_ENTITY && e2 != e1 && w->has[e2].collider &&
+        w->colliders[e2].blocks_movement) {
+        return (CollisionResult){.type = COLLISION_ENTITY, .entity = e2};
     }
 
     return (CollisionResult){.type = COLLISION_NONE, .entity = INVALID_ENTITY};

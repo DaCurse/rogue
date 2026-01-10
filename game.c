@@ -62,6 +62,13 @@ void setup_new_level(World *w) {
         w->floor->data[i].fog = false;
     }
 
+    // Reset entity spatial index
+    for (int y = 0; y < w->floor->height; y++) {
+        for (int x = 0; x < w->floor->width; x++) {
+            w->entity_at[y][x] = INVALID_ENTITY;
+        }
+    }
+
     // Remove all entities except player
     for (int e = 0; e < w->count; e++) {
         if (e == w->player)

@@ -10,7 +10,7 @@
 #include "floor.h"
 
 #define MAX_ENTITIES (128)
-#define INVALID_ENTITY (-1)
+#define INVALID_ENTITY ((Entity)(-1))
 #define LOG_MESSAGE_SIZE (MAP_W)
 #define PLAYER_NAME_MAX_LENGTH (16)
 
@@ -116,6 +116,9 @@ typedef struct {
 
     Entity collisions[MAX_ENTITIES];
     int collisions_count;
+
+    // Spatial index for quick occupancy checks
+    Entity entity_at[MAP_H][MAP_W];
 } World;
 
 Entity world_create_entity(World *w);
@@ -126,7 +129,6 @@ void world_add_collider(World *w, Entity e, Collider c);
 void world_add_move_intent(World *w, Entity e, MoveIntent mi);
 void world_add_collision_event(World *w, Entity e, CollisionEvent ce);
 void world_remove_entity(World *w, Entity e);
-bool world_is_occupied(World *w, int x, int y);
 int world_get_unoccupied_positions(World *w, Room *r, Position *out_arr,
                                    int max_len);
 bool world_get_random_unoccupied_in_room(World *w, Room *r, Position *out_pos);
