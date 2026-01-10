@@ -1,6 +1,7 @@
 #ifndef WORLD_H
 #define WORLD_H
 
+#include <assert.h>
 #include <ncurses.h>
 #include <stdbool.h>
 
@@ -102,6 +103,19 @@ typedef struct {
     CollisionEvent collision_events[MAX_ENTITIES];
 
     ComponentFlags has[MAX_ENTITIES];
+
+    // Hot lists to optimize system iterations
+    Entity movers[MAX_ENTITIES];
+    int movers_count;
+
+    Entity render_list[MAX_ENTITIES];
+    int render_list_count;
+
+    Entity combatants[MAX_ENTITIES];
+    int combatants_count;
+
+    Entity collisions[MAX_ENTITIES];
+    int collisions_count;
 } World;
 
 Entity world_create_entity(World *w);
@@ -117,5 +131,50 @@ int world_get_unoccupied_positions(World *w, Room *r, Position *out_arr,
                                    int max_len);
 bool world_get_random_unoccupied_in_room(World *w, Room *r, Position *out_pos);
 void world_logf(World *w, const char *format, ...);
+
+#define CHECK_COMPONENT_render_list(w, e)                                      \
+    assert((w)->has[e].position && (w)->has[e].renderable)
+#define CHECK_COMPONENT_movers(w, e)                                           \
+    assert((w)->has[e].position && (w)->has[e].move_intent)
+#define CHECK_COMPONENT_combatants(w, e) assert((w)->has[e].combat_stats)
+#define CHECK_COMPONENT_collisions(w, e) assert((w)->has[e].collision_event)
+
+// Iterates over all active entities in a hot list
+// Requires: world->LIST[MAX_ENTITIES], world->LIST_count
+// Note: 'var' is declared inside the macro
+#define FOR_EACH_ACTIVE(world, list, var)                                      \
+    for (int _i_##list = 0, var; _i_##list < (world)->list##_count &&          \
+                                 ((var) = (world)->list[_i_##list],            \
+                                 CHECK_COMPONENT_##list(world, var), 1);       \
+         ++_i_##list)
+
+// Iterates over all active entities in a hot list in reverse order
+// Requires: world->LIST[MAX_ENTITIES], world->LIST_count
+// Note: 'var' is declared inside the macro
+#define FOR_EACH_ACTIVE_REVERSE(world, list, var)                              \
+    for (int _i_##list = (world)->list##_count - 1, var;                       \
+         _i_##list >= 0 && ((var) = (world)->list[_i_##list],                  \
+                           CHECK_COMPONENT_##list(world, var), 1);             \
+         --_i_##list)
+
+// Iterates over all valid entities (0 to count-1).
+#define FOR_EACH_ENTITY(world, var)                                            \
+    for (int var = 0; var < (world)->count; ++var)
+
+// Iterates over all entities with a single component predicate.
+#define FOR_EACH_ENTITY_IF1(world, var, comp1)                                 \
+    for (int var = 0; var < (world)->count; ++var)                             \
+        if ((world)->has[var].comp1)
+
+// Iterates over all entities with two component predicates.
+#define FOR_EACH_ENTITY_IF2(world, var, comp1, comp2)                          \
+    for (int var = 0; var < (world)->count; ++var)                             \
+        if ((world)->has[var].comp1 && (world)->has[var].comp2)
+
+// Iterates over all entities with three component predicates.
+#define FOR_EACH_ENTITY_IF3(world, var, comp1, comp2, comp3)                   \
+    for (int var = 0; var < (world)->count; ++var)                             \
+        if ((world)->has[var].comp1 && (world)->has[var].comp2 &&              \
+            (world)->has[var].comp3)
 
 #endif // WORLD_H

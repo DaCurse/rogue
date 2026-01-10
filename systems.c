@@ -8,7 +8,7 @@
 #include "game.h"
 #include "utils.h"
 
-#define MESSAGE_BOREOM_THRESHOLD (5)
+#define MESSAGE_BOREOM_THRESHOLD (10)
 
 static Renderable tile_glyph(Floor *f, int x, int y) {
     switch (tile_at(f, x, y)) {
@@ -51,10 +51,7 @@ void system_render_map(World *w) {
     }
 
     // Render entities
-    for (int e = 0; e < w->count; e++) {
-        if (!(w->has[e].position && w->has[e].renderable))
-            continue;
-
+    FOR_EACH_ACTIVE(w, render_list, e) {
         Position *p = &w->positions[e];
 
 #ifndef DEBUG_REVEAL_MAP
@@ -151,10 +148,8 @@ static CollisionResult check_collision(World *w, Floor *f, Entity e1,
     }
 
     // Entity collision
-    for (int e2 = 0; e2 < w->count; e2++) {
+    FOR_EACH_ENTITY_IF2(w, e2, position, collider) {
         if (e1 == e2)
-            continue;
-        if (!(w->has[e2].position && w->has[e2].collider))
             continue;
 
         Position *p2 = &w->positions[e2];
@@ -187,10 +182,7 @@ static void handle_player_movement(World *w, Position *p) {
 }
 
 void system_movement(World *w) {
-    for (int e = 0; e < w->count; e++) {
-        if (!(w->has[e].position && w->has[e].move_intent))
-            continue;
-
+    FOR_EACH_ACTIVE(w, movers, e) {
         Position *p = &w->positions[e];
         MoveIntent *mi = &w->move_intents[e];
 
@@ -199,7 +191,6 @@ void system_movement(World *w) {
 
         CollisionResult cr = check_collision(w, w->floor, e, new_x, new_y);
         switch (cr.type) {
-
         case COLLISION_ENTITY:
             CollisionEvent ce = {.target = cr.entity};
             world_add_collision_event(w, e, ce);
@@ -221,12 +212,15 @@ void system_movement(World *w) {
 
         w->has[e].move_intent = false;
     }
+
+    // Clear hot movers list
+    w->movers_count = 0;
 }
 
 static void log_combat_event(World *w, const char *attacker,
                              const char *defender, int damage_dealt,
                              int damage_taken) {
-    char attack_msg[128];
+    char attack_msg[LOG_MESSAGE_SIZE / 2];
     if (damage_dealt > 0) {
         snprintf(attack_msg, sizeof(attack_msg), "%s strikes %s for %d damage!",
                  attacker, defender, damage_dealt);
@@ -236,7 +230,7 @@ static void log_combat_event(World *w, const char *attacker,
                  defender);
     }
 
-    char counter_msg[128];
+    char counter_msg[LOG_MESSAGE_SIZE / 2];
     if (damage_taken > 0) {
         snprintf(counter_msg, sizeof(counter_msg),
                  "%s counters, dealing %d damage.", defender, damage_taken);
@@ -249,10 +243,7 @@ static void log_combat_event(World *w, const char *attacker,
 }
 
 void system_combat(World *w) {
-    for (int e = 0; e < w->count; e++) {
-        if (!w->has[e].collision_event)
-            continue;
-
+    FOR_EACH_ACTIVE(w, collisions, e) {
         CollisionEvent *ce = &w->collision_events[e];
         Entity attacker = e;
         Entity defender = ce->target;
@@ -271,14 +262,17 @@ void system_combat(World *w) {
         int damage_to_attacker =
             MAX(0, defender_stats->attack - attacker_stats->defense);
 
-        defender_stats->hp -= damage_to_defender;
-        attacker_stats->hp -= damage_to_attacker;
+        defender_stats->hp = MAX(0, defender_stats->hp - damage_to_defender);
+        attacker_stats->hp = MAX(0, attacker_stats->hp - damage_to_attacker);
 
         log_combat_event(w, attacker_stats->name, defender_stats->name,
                          damage_to_defender, damage_to_attacker);
 
         w->has[e].collision_event = false;
     }
+
+    // Clear hot collisions list
+    w->collisions_count = 0;
 }
 
 void system_exit_room(World *w) {
@@ -296,10 +290,7 @@ void system_exit_room(World *w) {
 }
 
 void system_death(World *w) {
-    for (int e = 0; e < w->count; e++) {
-        if (!w->has[e].combat_stats)
-            continue;
-
+    FOR_EACH_ACTIVE_REVERSE(w, combatants, e) {
         CombatStats *cs = &w->combat_stats[e];
         if (cs->hp <= 0) {
             world_logf(w, "%s dies.", cs->name);

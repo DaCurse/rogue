@@ -45,7 +45,8 @@ int main(int argc, char **argv) {
 
     char player_name[PLAYER_NAME_MAX_LENGTH];
     printf("What is your name, adventurer? ");
-    if (fgets(player_name, sizeof(player_name), stdin) == NULL || strlen(player_name) == 1) {
+    if (fgets(player_name, sizeof(player_name), stdin) == NULL ||
+        strlen(player_name) == 1) {
         strncpy(player_name, "Player", sizeof(player_name) - 1);
         player_name[sizeof(player_name) - 1] = '\0';
     } else {

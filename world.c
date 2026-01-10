@@ -7,6 +7,23 @@
 #include "color.h"
 #include "utils.h"
 
+static void add_to_list(Entity *list, int *count, Entity e) {
+    for (int i = 0; i < *count; i++) {
+        if (list[i] == e)
+            return;
+    }
+    list[(*count)++] = e;
+}
+
+static void remove_from_list(Entity *list, int *count, Entity e) {
+    for (int i = 0; i < *count; i++) {
+        if (list[i] == e) {
+            list[i] = list[--(*count)];
+            return;
+        }
+    }
+}
+
 Entity world_create_entity(World *w) {
     Entity e = w->count++;
     w->entities[e] = e;
@@ -17,16 +34,34 @@ Entity world_create_entity(World *w) {
 void world_add_position(World *w, Entity e, Position pos) {
     w->positions[e] = pos;
     w->has[e].position = true;
+
+    if (w->has[e].renderable) {
+        add_to_list(w->render_list, &w->render_list_count, e);
+    }
+    if (w->has[e].combat_stats) {
+        add_to_list(w->combatants, &w->combatants_count, e);
+    }
+    if (w->has[e].move_intent) {
+        add_to_list(w->movers, &w->movers_count, e);
+    }
 }
 
 void world_add_renderable(World *w, Entity e, Renderable r) {
     w->renderables[e] = r;
     w->has[e].renderable = true;
+
+    if (w->has[e].position) {
+        add_to_list(w->render_list, &w->render_list_count, e);
+    }
 }
 
 void world_add_combat_stats(World *w, Entity e, CombatStats cs) {
     w->combat_stats[e] = cs;
     w->has[e].combat_stats = true;
+
+    if (w->has[e].position) {
+        add_to_list(w->combatants, &w->combatants_count, e);
+    }
 }
 
 void world_add_collider(World *w, Entity e, Collider c) {
@@ -37,15 +72,22 @@ void world_add_collider(World *w, Entity e, Collider c) {
 void world_add_move_intent(World *w, Entity e, MoveIntent mi) {
     w->move_intents[e] = mi;
     w->has[e].move_intent = true;
+
+    if (w->has[e].position) {
+        add_to_list(w->movers, &w->movers_count, e);
+    }
 }
 
 void world_add_collision_event(World *w, Entity e, CollisionEvent ce) {
     w->collision_events[e] = ce;
     w->has[e].collision_event = true;
+    add_to_list(w->collisions, &w->collisions_count, e);
 }
 
 void world_remove_entity(World *w, Entity e) {
     memset(&w->has[e], 0, sizeof(ComponentFlags));
+    remove_from_list(w->render_list, &w->render_list_count, e);
+    remove_from_list(w->combatants, &w->combatants_count, e);
 }
 
 bool world_is_occupied(World *w, int x, int y) {
