@@ -7,7 +7,7 @@
 #include "enemy.h"
 #include "utils.h"
 
-void create_player(World *world) {
+void create_player(World *world, char *name) {
     Entity player = world_create_entity(world);
     world->player = player;
     world->player_data = (PlayerData){
@@ -17,12 +17,12 @@ void create_player(World *world) {
 
     Renderable player_render = {.glyph = '@', .color_pair = COLOR_PAIR_PLAYER};
     CombatStats combat_stats = {
-        .name = "Player",
-        .hp = 100,
-        .max_hp = 100,
+        .hp = 50,
+        .max_hp = 50,
         .attack = 10,
         .defense = 0,
     };
+    strncpy(combat_stats.name, name, sizeof(combat_stats.name) - 1);
 
     // Position will be set in setup_new_level
     world_add_renderable(world, player, player_render);

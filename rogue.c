@@ -42,6 +42,18 @@ int main(int argc, char **argv) {
     }
     srand(seed);
 
+    char player_name[PLAYER_NAME_MAX_LENGTH];
+    printf("What is your name, adventurer? ");
+    if (fgets(player_name, sizeof(player_name), stdin) == NULL) {
+        strncpy(player_name, "Player", sizeof(player_name) - 1);
+        player_name[sizeof(player_name) - 1] = '\0';
+    } else {
+        size_t len = strlen(player_name);
+        if (len > 0 && player_name[len - 1] == '\n') {
+            player_name[len - 1] = '\0';
+        }
+    }
+
     // Initialize floor
     Tile tiles[MAP_H * MAP_W];
     WallType walls[MAP_H * MAP_W];
@@ -86,12 +98,14 @@ int main(int argc, char **argv) {
     World world = {0};
     world.seed = seed;
     world.floor = &floor;
-    create_player(&world);
+    create_player(&world, player_name);
     setup_new_level(&world);
 
     world.map = (RenderContext){.win = map_win};
     world.log_window = (RenderContext){.win = log_win};
     world.status_bar = (RenderContext){.win = status_win};
+    printf("sizeof(World) = %zu bytes\n", sizeof(World));
+    exit(0);
 
     // Main game loop
     while (true) {
@@ -103,13 +117,30 @@ int main(int argc, char **argv) {
         if (ch == 'q')
             break;
 
+        world.player_data.turn_count++;
         system_player_input(&world, ch);
         system_movement(&world);
         system_combat(&world);
         system_exit_room(&world);
         system_death(&world);
+
+        if (world.player_data.game_over) {
+            world_logf(&world, "Game Over! Press any key to quit...");
+            system_render_map(&world);
+            system_render_status_bar(&world);
+            system_render_logs(&world);
+            wgetch(map_win);
+            break;
+        }
     }
 
     endwin();
+
+    if (world.player_data.game_over) {
+        printf("\nGame Over!\n");
+        printf("%s reached Floor %d.\n", world.combat_stats[world.player].name,
+               world.player_data.floor);
+    }
+
     return 0;
 }

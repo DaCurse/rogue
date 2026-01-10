@@ -7,6 +7,8 @@
 #include "game.h"
 #include "utils.h"
 
+#define MESSAGE_BOREOM_THRESHOLD (5)
+
 static Renderable tile_glyph(Floor *f, int x, int y) {
     switch (tile_at(f, x, y)) {
     case TILE_VOID:
@@ -68,18 +70,30 @@ void system_render_map(World *w) {
 }
 
 void system_render_logs(World *w) {
+    // Message boredom: clear message if too old
+    if (w->player_data.turn_count - w->log.turn_timestamp >
+        MESSAGE_BOREOM_THRESHOLD) {
+        for (int i = 0; i < LOG_H; i++) {
+            w->log.messages[i][0] = '\0';
+            w->log.repeat_counts[i] = 0;
+        }
+    }
+
     werase(w->log_window.win);
 
-    if (w->log_message[0]) {
-        if (w->log_repeat_count > 1) {
+    for (int i = 0; i < LOG_H; i++) {
+        if (w->log.messages[i][0] == '\0')
+            continue;
+
+        if (w->log.repeat_counts[i] > 1) {
             char suffix[32];
-            snprintf(suffix, sizeof(suffix), " (x%d)", w->log_repeat_count);
+            snprintf(suffix, sizeof(suffix), " (x%d)", w->log.repeat_counts[i]);
 
             int max_msg_len = LOG_MESSAGE_SIZE - strlen(suffix) - 1;
-            mvwprintw(w->log_window.win, 0, 0, " %.*s%s", max_msg_len,
-                      w->log_message, suffix);
+            mvwprintw(w->log_window.win, i, 0, " %.*s%s", max_msg_len,
+                      w->log.messages[i], suffix);
         } else {
-            mvwprintw(w->log_window.win, 0, 0, " %s", w->log_message);
+            mvwprintw(w->log_window.win, i, 0, " %s", w->log.messages[i]);
         }
     }
 
@@ -92,8 +106,10 @@ void system_render_status_bar(World *w) {
     CombatStats *cs = &w->combat_stats[w->player];
 
     wbkgd(w->status_bar.win, COLOR_PAIR(COLOR_PAIR_STATUS));
-    mvwprintw(w->status_bar.win, 0, 1, "Level: 1 Floor: %d HP: %d/%d Seed: %u",
-              w->player_data.floor, cs->hp, cs->max_hp, w->seed);
+    mvwprintw(w->status_bar.win, 0, 1,
+              "%s, Level 1 adventurer | Floor: %d HP: %d/%d Seed: %u",
+              w->combat_stats[w->player].name, w->player_data.floor, cs->hp,
+              cs->max_hp, w->seed);
 
     wrefresh(w->status_bar.win);
 }
@@ -208,22 +224,21 @@ static void log_combat_event(World *w, const char *attacker,
                              int damage_taken) {
     char attack_msg[128];
     if (damage_dealt > 0) {
-        snprintf(attack_msg, sizeof(attack_msg),
-                 "The %s strikes the %s for %d damage!", attacker, defender,
-                 damage_dealt);
+        snprintf(attack_msg, sizeof(attack_msg), "%s strikes %s for %d damage!",
+                 attacker, defender, damage_dealt);
     } else {
         snprintf(attack_msg, sizeof(attack_msg),
-                 "The %s strikes the %s but the attack is blocked!", attacker,
+                 "%s strikes %s but the attack is blocked!", attacker,
                  defender);
     }
 
     char counter_msg[128];
     if (damage_taken > 0) {
         snprintf(counter_msg, sizeof(counter_msg),
-                 "The %s counters, dealing %d damage.", defender, damage_taken);
+                 "%s counters, dealing %d damage.", defender, damage_taken);
     } else {
         snprintf(counter_msg, sizeof(counter_msg),
-                 "The %s counters but deals no damage.", defender);
+                 "%s counters but deals no damage.", defender);
     }
 
     world_logf(w, "%s %s", attack_msg, counter_msg);
@@ -283,7 +298,11 @@ void system_death(World *w) {
 
         CombatStats *cs = &w->combat_stats[e];
         if (cs->hp <= 0) {
-            world_logf(w, "The %s dies.", cs->name);
+            world_logf(w, "%s dies.", cs->name);
+
+            if (e == w->player) {
+                w->player_data.game_over = true;
+            }
 
             // Remove all components (entity cleanup)
             world_remove_entity(w, e);

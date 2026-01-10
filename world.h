@@ -11,6 +11,7 @@
 #define MAX_ENTITIES (128)
 #define LOG_MESSAGE_SIZE (MAP_W)
 #define INVALID_ENTITY (-1)
+#define PLAYER_NAME_MAX_LENGTH (16)
 
 typedef int Entity;
 
@@ -30,10 +31,12 @@ typedef struct {
 typedef struct {
     int room_id;
     int floor;
+    bool game_over;
+    int turn_count;
 } PlayerData;
 
 typedef struct {
-    char name[16];
+    char name[PLAYER_NAME_MAX_LENGTH];
     int hp;
     int max_hp;
     int attack;
@@ -60,6 +63,12 @@ typedef struct {
 } CollisionEvent;
 
 typedef struct {
+    char messages[LOG_H][LOG_MESSAGE_SIZE];
+    int repeat_counts[LOG_H];
+    int turn_timestamp;
+} MessageLog;
+
+typedef struct {
     unsigned int seed;
     RenderContext map;
     RenderContext log_window;
@@ -74,8 +83,7 @@ typedef struct {
     Entity player;
     PlayerData player_data;
 
-    char log_message[LOG_MESSAGE_SIZE];
-    int log_repeat_count;
+    MessageLog log;
 
     Position positions[MAX_ENTITIES];
     Renderable renderables[MAX_ENTITIES];

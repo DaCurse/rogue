@@ -103,11 +103,23 @@ void world_logf(World *w, const char *format, ...) {
     vsnprintf(buffer, sizeof(buffer), format, args);
     va_end(args);
 
-    if (strncmp(buffer, w->log_message, LOG_MESSAGE_SIZE) == 0) {
-        w->log_repeat_count++;
+    // Check repeats against the most recent message
+    int last_idx = LOG_H - 1;
+    if (strncmp(buffer, w->log.messages[last_idx], LOG_MESSAGE_SIZE) == 0) {
+        w->log.repeat_counts[last_idx]++;
     } else {
-        w->log_repeat_count = 1;
-        strncpy(w->log_message, buffer, LOG_MESSAGE_SIZE - 1);
-        w->log_message[LOG_MESSAGE_SIZE - 1] = '\0';
+        // Shift history up
+        for (int i = 0; i < LOG_H - 1; i++) {
+            memcpy(w->log.messages[i], w->log.messages[i + 1],
+                   LOG_MESSAGE_SIZE);
+            w->log.repeat_counts[i] = w->log.repeat_counts[i + 1];
+        }
+
+        // Add new message at the bottom
+        strncpy(w->log.messages[last_idx], buffer, LOG_MESSAGE_SIZE - 1);
+        w->log.messages[last_idx][LOG_MESSAGE_SIZE - 1] = '\0';
+        w->log.repeat_counts[last_idx] = 1;
     }
+
+    w->log.turn_timestamp = w->player_data.turn_count;
 }
