@@ -52,8 +52,8 @@ static bool is_safe(Floor *f, int idx, WallType bad_wall) {
 }
 
 // Determines if we should skip carving the current tile to avoid creating a
-// "stub" or unconnected road segment, particularly when a perpendicular corridor
-// would have shifted its connection point.
+// "stub" or unconnected road segment, particularly when a perpendicular
+// corridor would have shifted its connection point.
 static bool should_skip_stub(Floor *f, int u, int v, bool horizontal, int start,
                              int end, WallType perp_bad_wall) {
     int i = get_idx(f, u, v, horizontal);
@@ -138,7 +138,8 @@ static void draw_connectivity(Floor *f, int u, int v, bool horizontal,
     }
 }
 
-// Main logic for safely carving a straight line that can nudge around obstacles.
+// Main logic for safely carving a straight line that can nudge around
+// obstacles.
 static void carve_safe_line(Floor *f, int u1, int u2, int v, bool horizontal) {
     int start = (u1 < u2 ? u1 : u2);
     int end = (u1 > u2 ? u1 : u2);
