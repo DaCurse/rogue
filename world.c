@@ -152,8 +152,7 @@ void world_logf(World *w, const char *format, ...) {
         }
 
         // Add new message at the bottom
-        strncpy(w->log.messages[last_idx], buffer, LOG_MESSAGE_SIZE - 1);
-        w->log.messages[last_idx][LOG_MESSAGE_SIZE - 1] = '\0';
+        snprintf(w->log.messages[last_idx], LOG_MESSAGE_SIZE, "%s", buffer);
         w->log.repeat_counts[last_idx] = 1;
     }
 

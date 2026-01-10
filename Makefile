@@ -29,6 +29,10 @@ endif
 rogue: rogue.c
 	$(CC) rogue.c $(CFLAGS) $(LDFLAGS) -lncurses -o $@
 
+release: CFLAGS += -O2 -DNDEBUG
+release: LDFLAGS +=
+release: rogue
+
 .PHONY: clean
 clean:
 	rm -f rogue rogue.exe
