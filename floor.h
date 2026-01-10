@@ -45,5 +45,7 @@ void floor_build_walls(Floor *f);
 void floor_reveal_area(Floor *f, int x, int y, int radius);
 int floor_find_room(Floor *f, int x, int y);
 void floor_reveal_room(Floor *f, int room_index);
+Room *floor_random_room(Floor *f);
+Room *floor_random_room_excl(Floor *f, int excluded_idx);
 
 #endif // FLOOR_H

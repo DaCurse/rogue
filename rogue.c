@@ -8,12 +8,14 @@
 
 #include "color.h"
 #include "floor.h"
+#include "game.h"
 #include "systems.h"
 #include "utils.h"
 #include "world.h"
 
 #include "color.c"
 #include "floor.c"
+#include "game.c"
 #include "systems.c"
 #include "utils.c"
 #include "world.c"
@@ -28,67 +30,7 @@ WINDOW *create_window(int h, int w, int y, int x) {
                 x, w, h);
         exit(1);
     }
-    // Set window background to black
-    wbkgd(win, COLOR_PAIR(COLOR_VOID));
     return win;
-}
-
-void create_player(World *world, Floor *floor) {
-    Entity player = world_create_entity(world);
-    world->player = player;
-    world->player_data = (Player){};
-
-    Room first_room = floor->rooms[0];
-    Position starting_pos = {
-        .x = first_room.x + random_int(1, first_room.w - 2),
-        .y = first_room.y + random_int(1, first_room.h - 2),
-    };
-    Renderable player_render = {.glyph = '@', .color_pair = COLOR_PLAYER};
-    CombatStats combat_stats = {
-        .name = "Player",
-        .hp = 100,
-        .max_hp = 100,
-        .attack = 10,
-        .defense = 0,
-    };
-    world_add_position(world, player, starting_pos);
-    world_add_renderable(world, player, player_render);
-    world_add_combat_stats(world, player, combat_stats);
-
-    // Reveal the starting room
-    floor_reveal_room(floor, 0);
-}
-
-Entity create_enemy(World *world, Floor *floor) {
-    if (floor->room_count == 0)
-        return -1;
-
-    Entity enemy = world_create_entity(world);
-    int room_idx = 0;
-
-    if (floor->room_count > 1) {
-        room_idx = random_int(1, floor->room_count - 1);
-    }
-
-    Room room = floor->rooms[room_idx];
-    Position enemy_pos = {
-        .x = room.x + random_int(1, room.w - 2),
-        .y = room.y + random_int(1, room.h - 2),
-    };
-    Renderable enemy_render = {.glyph = 'E', .color_pair = COLOR_ENEMY};
-    CombatStats combat_stats = {
-        .name = "Enemy",
-        .hp = 20,
-        .max_hp = 20,
-        .attack = 5,
-        .defense = 2,
-    };
-    world_add_position(world, enemy, enemy_pos);
-    world_add_renderable(world, enemy, enemy_render);
-    world_add_combat_stats(world, enemy, combat_stats);
-    world_add_collider(world, enemy, (Collider){.blocks_movement = true});
-
-    return enemy;
 }
 
 int main(int argc, char **argv) {
@@ -116,10 +58,8 @@ int main(int argc, char **argv) {
                    .max_rooms = MAX_ROOMS,
                    .rooms = rooms};
 
+    // Initial void fill only, rest handled by setup_new_level
     floor_fill_void(&floor);
-    floor_generate_rooms(&floor, ROOM_MIN_SIZE, ROOM_MAX_SIZE);
-    floor_build_walls(&floor);
-    floor_connect_rooms(&floor);
 
     // Initialize ncurses
     initscr();
@@ -146,8 +86,8 @@ int main(int argc, char **argv) {
     World world = {0};
     world.seed = seed;
     world.floor = &floor;
-    create_player(&world, &floor);
-    create_enemy(&world, &floor);
+    create_player(&world);
+    setup_new_level(&world);
 
     world.map = (RenderContext){.win = map_win};
     world.log_window = (RenderContext){.win = log_win};
@@ -166,6 +106,7 @@ int main(int argc, char **argv) {
         system_player_input(&world, ch);
         system_movement(&world);
         system_combat(&world);
+        system_exit_room(&world);
         system_death(&world);
     }
 

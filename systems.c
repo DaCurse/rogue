@@ -2,8 +2,32 @@
 #include <stdio.h>
 
 #include "color.h"
+#include "game.h"
 #include "systems.h"
 #include "utils.h"
+
+static Renderable tile_glyph(Floor *f, int x, int y) {
+    switch (tile_at(f, x, y)) {
+    case TILE_VOID:
+        return (Renderable){.glyph = ' ', .color_pair = COLOR_PAIR_VOID};
+    case TILE_FLOOR:
+        return (Renderable){.glyph = '.', .color_pair = COLOR_PAIR_FLOOR};
+    case TILE_ROAD:
+        return (Renderable){.glyph = '#', .color_pair = COLOR_PAIR_ROAD};
+    case TILE_WALL:
+        switch (f->walls[x + f->width * y]) {
+        case WALL_VERTICAL:
+            return (Renderable){.glyph = '|', .color_pair = COLOR_PAIR_WALL};
+        case WALL_HORIZONTAL:
+        case WALL_CORNER:
+            return (Renderable){.glyph = '-', .color_pair = COLOR_PAIR_WALL};
+        default:
+            return (Renderable){.glyph = '?', .color_pair = COLOR_PAIR_UNKNOWN};
+        }
+    default:
+        return (Renderable){.glyph = '?', .color_pair = COLOR_PAIR_UNKNOWN};
+    }
+}
 
 void system_render_map(World *w) {
     werase(w->map.win);
@@ -38,6 +62,7 @@ void system_render_map(World *w) {
         mvwaddch(w->map.win, p->y, p->x, r->glyph | COLOR_PAIR(r->color_pair));
     }
 
+    wbkgd(w->map.win, COLOR_PAIR(COLOR_PAIR_VOID));
     wrefresh(w->map.win);
 }
 
@@ -65,7 +90,7 @@ void system_render_status_bar(World *w) {
 
     CombatStats *cs = &w->combat_stats[w->player];
 
-    wbkgd(w->status_bar.win, COLOR_PAIR(COLOR_STATUS));
+    wbkgd(w->status_bar.win, COLOR_PAIR(COLOR_PAIR_STATUS));
     mvwprintw(w->status_bar.win, 0, 1, "Level: 1 Floor: 1 HP: %d/%d Seed: %u",
               cs->hp, cs->max_hp, w->seed);
 
@@ -95,8 +120,8 @@ void system_player_input(World *w, char key) {
     world_add_move_intent(w, w->player, (MoveIntent){.dx = dx, .dy = dy});
 }
 
-CollisionResult check_collision(World *w, Floor *f, Entity e1, int target_x,
-                                int target_y) {
+static CollisionResult check_collision(World *w, Floor *f, Entity e1,
+                                       int target_x, int target_y) {
     // Map collision
     Tile t = tile_at(f, target_x, target_y);
     if (t == TILE_WALL || t == TILE_VOID) {
@@ -123,6 +148,22 @@ CollisionResult check_collision(World *w, Floor *f, Entity e1, int target_x,
     return (CollisionResult){.type = COLLISION_NONE, .entity = INVALID_ENTITY};
 }
 
+static void handle_player_movement(World *w, Position *p) {
+    Tile current_tile = tile_at(w->floor, p->x, p->y);
+    if (current_tile == TILE_ROAD) {
+        // On road: reveal only immediate surroundings (radius 1)
+        floor_reveal_area(w->floor, p->x, p->y, 0);
+        w->player_data.room_id = -1;
+    } else if (current_tile == TILE_FLOOR) {
+        // In room: reveal the entire room
+        int room_idx = floor_find_room(w->floor, p->x, p->y);
+        if (room_idx >= 0) {
+            floor_reveal_room(w->floor, room_idx);
+            w->player_data.room_id = room_idx;
+        }
+    }
+}
+
 void system_movement(World *w) {
     for (int e = 0; e < w->count; e++) {
         if (!(w->has_position[e] && w->has_move_intent[e]))
@@ -136,40 +177,22 @@ void system_movement(World *w) {
 
         CollisionResult cr = check_collision(w, w->floor, e, new_x, new_y);
         switch (cr.type) {
-        case COLLISION_MAP:
-            // Blocked by map
-            break;
-        case COLLISION_ENTITY:
-            // Handle entity collision
 
-            // If both entities have combat stats and one is a player, initiate
-            // combat
-            if (w->has_combat_stats[e] && w->has_combat_stats[cr.entity] &&
-                (e == w->player || cr.entity == w->player)) {
-                CombatIntent ci = {.attacker = e, .defender = cr.entity};
-                world_add_combat_intent(w, e, ci);
-            }
+        case COLLISION_ENTITY:
+            CollisionEvent ce = {.target = cr.entity};
+            world_add_collision_event(w, e, ce);
             break;
+
         case COLLISION_NONE:
-            // No collision, proceed with movement
             p->x = new_x;
             p->y = new_y;
 
             if (e == w->player) {
-                Tile current_tile = tile_at(w->floor, p->x, p->y);
-                if (current_tile == TILE_ROAD) {
-                    // On road: reveal only immediate surroundings (radius 1)
-                    floor_reveal_area(w->floor, p->x, p->y, 1);
-                } else if (current_tile == TILE_FLOOR) {
-                    // In room: reveal the entire room
-                    int room_idx = floor_find_room(w->floor, p->x, p->y);
-                    if (room_idx >= 0) {
-                        floor_reveal_room(w->floor, room_idx);
-                    }
-                }
+                handle_player_movement(w, p);
             }
             break;
 
+        case COLLISION_MAP:
         default:
             break;
         }
@@ -206,12 +229,21 @@ static void log_combat_event(World *w, const char *attacker,
 
 void system_combat(World *w) {
     for (int e = 0; e < w->count; e++) {
-        if (!(w->has_combat_intent[e] && w->has_combat_stats[e]))
+        if (!w->has_collision_event[e])
             continue;
 
-        CombatIntent *ci = &w->combat_intents[e];
-        CombatStats *attacker_stats = &w->combat_stats[ci->attacker];
-        CombatStats *defender_stats = &w->combat_stats[ci->defender];
+        CollisionEvent *ce = &w->collision_events[e];
+        Entity attacker = e;
+        Entity defender = ce->target;
+
+        // Check if either entity is the player and both have combat stats
+        if (!(attacker == w->player || defender == w->player))
+            continue;
+        if (!(w->has_combat_stats[attacker] && w->has_combat_stats[defender]))
+            continue;
+
+        CombatStats *attacker_stats = &w->combat_stats[attacker];
+        CombatStats *defender_stats = &w->combat_stats[defender];
 
         int damage_to_defender =
             MAX(0, attacker_stats->attack - defender_stats->defense);
@@ -224,7 +256,21 @@ void system_combat(World *w) {
         log_combat_event(w, attacker_stats->name, defender_stats->name,
                          damage_to_defender, damage_to_attacker);
 
-        w->has_combat_intent[e] = false;
+        w->has_collision_event[e] = false;
+    }
+}
+
+void system_exit_room(World *w) {
+    if (!w->has_collision_event[w->player])
+        return;
+
+    CollisionEvent *ce = &w->collision_events[w->player];
+    if (ce->target == w->room_exit) {
+        // Player collided with room exit
+        w->has_collision_event[w->player] = false;
+        world_logf(w, "You exit the room.");
+
+        setup_new_level(w);
     }
 }
 
@@ -238,10 +284,7 @@ void system_death(World *w) {
             world_logf(w, "The %s dies.", cs->name);
 
             // Remove all components (entity cleanup)
-            w->has_position[e] = false;
-            w->has_renderable[e] = false;
-            w->has_combat_stats[e] = false;
-            w->has_collider[e] = false;
+            world_remove_entity(w, e);
         }
     }
 }

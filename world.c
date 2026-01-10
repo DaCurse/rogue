@@ -38,9 +38,18 @@ void world_add_move_intent(World *w, Entity e, MoveIntent mi) {
     w->has_move_intent[e] = true;
 }
 
-void world_add_combat_intent(World *w, Entity e, CombatIntent ci) {
-    w->combat_intents[e] = ci;
-    w->has_combat_intent[e] = true;
+void world_add_collision_event(World *w, Entity e, CollisionEvent ce) {
+    w->collision_events[e] = ce;
+    w->has_collision_event[e] = true;
+}
+
+void world_remove_entity(World *w, Entity e) {
+    w->has_position[e] = false;
+    w->has_renderable[e] = false;
+    w->has_combat_stats[e] = false;
+    w->has_collider[e] = false;
+    w->has_move_intent[e] = false;
+    w->has_collision_event[e] = false;
 }
 
 void world_logf(World *w, const char *format, ...) {
@@ -56,28 +65,5 @@ void world_logf(World *w, const char *format, ...) {
         w->log_repeat_count = 1;
         strncpy(w->log_message, buffer, LOG_MESSAGE_SIZE - 1);
         w->log_message[LOG_MESSAGE_SIZE - 1] = '\0';
-    }
-}
-
-Renderable tile_glyph(Floor *f, int x, int y) {
-    switch (tile_at(f, x, y)) {
-    case TILE_VOID:
-        return (Renderable){.glyph = ' ', .color_pair = COLOR_VOID};
-    case TILE_FLOOR:
-        return (Renderable){.glyph = '.', .color_pair = COLOR_FLOOR};
-    case TILE_ROAD:
-        return (Renderable){.glyph = '#', .color_pair = COLOR_ROAD};
-    case TILE_WALL:
-        switch (f->walls[x + f->width * y]) {
-        case WALL_VERTICAL:
-            return (Renderable){.glyph = '|', .color_pair = COLOR_WALL};
-        case WALL_HORIZONTAL:
-        case WALL_CORNER:
-            return (Renderable){.glyph = '-', .color_pair = COLOR_WALL};
-        default:
-            return (Renderable){.glyph = '?', .color_pair = COLOR_UNKNOWN};
-        }
-    default:
-        return (Renderable){.glyph = '?', .color_pair = COLOR_UNKNOWN};
     }
 }

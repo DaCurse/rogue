@@ -4,6 +4,7 @@
 #include <ncurses.h>
 #include <stdbool.h>
 
+#include "color.h"
 #include "config.h"
 #include "floor.h"
 
@@ -23,10 +24,11 @@ typedef struct {
 
 typedef struct {
     char glyph;
-    int color_pair;
+    ColorPair color_pair;
 } Renderable;
 
 typedef struct {
+    int room_id;
 } Player;
 
 typedef struct {
@@ -53,18 +55,20 @@ typedef struct {
 } MoveIntent;
 
 typedef struct {
-    Entity attacker, defender;
-} CombatIntent;
+    Entity target;
+} CollisionEvent;
 
 typedef struct {
     unsigned int seed;
-    Floor *floor;
     RenderContext map;
     RenderContext log_window;
     RenderContext status_bar;
 
     int count;
     Entity entities[MAX_ENTITIES];
+
+    Floor *floor;
+    Entity room_exit;
 
     Entity player;
     Player player_data;
@@ -77,14 +81,14 @@ typedef struct {
     CombatStats combat_stats[MAX_ENTITIES];
     Collider colliders[MAX_ENTITIES];
     MoveIntent move_intents[MAX_ENTITIES];
-    CombatIntent combat_intents[MAX_ENTITIES];
+    CollisionEvent collision_events[MAX_ENTITIES];
 
     bool has_position[MAX_ENTITIES];
     bool has_renderable[MAX_ENTITIES];
     bool has_combat_stats[MAX_ENTITIES];
     bool has_collider[MAX_ENTITIES];
     bool has_move_intent[MAX_ENTITIES];
-    bool has_combat_intent[MAX_ENTITIES];
+    bool has_collision_event[MAX_ENTITIES];
 } World;
 
 Entity world_create_entity(World *w);
@@ -93,8 +97,8 @@ void world_add_renderable(World *w, Entity e, Renderable r);
 void world_add_combat_stats(World *w, Entity e, CombatStats cs);
 void world_add_collider(World *w, Entity e, Collider c);
 void world_add_move_intent(World *w, Entity e, MoveIntent mi);
-void world_add_combat_intent(World *w, Entity e, CombatIntent ci);
+void world_add_collision_event(World *w, Entity e, CollisionEvent ce);
+void world_remove_entity(World *w, Entity e);
 void world_logf(World *w, const char *format, ...);
-Renderable tile_glyph(Floor *f, int x, int y);
 
 #endif // WORLD_H

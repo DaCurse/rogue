@@ -321,3 +321,36 @@ void floor_reveal_room(Floor *f, int room_index) {
         }
     }
 }
+
+Room *floor_random_room(Floor *f) {
+    if (f->room_count == 0)
+        return NULL;
+
+    int room_idx = random_int(0, f->room_count - 1);
+    return &f->rooms[room_idx];
+}
+
+Room *floor_random_room_excl(Floor *f, int excluded_idx) {
+    if (f->room_count == 0)
+        return NULL;
+
+    // If exclusion is out of bounds, just pick any random room
+    if (excluded_idx < 0 || excluded_idx >= f->room_count) {
+        return &f->rooms[random_int(0, f->room_count - 1)];
+    }
+
+    if (f->room_count == 1) {
+        // Since excluded_idx is valid (0), we must exclude the only room
+        return NULL;
+    }
+
+    // Pick from the range of indices [0, room_count - 2]
+    // Virtually, this represents the array of indices with 'excluded_idx'
+    // removed.
+    int idx = random_int(0, f->room_count - 2);
+    if (idx >= excluded_idx) {
+        idx++;
+    }
+
+    return &f->rooms[idx];
+}
