@@ -3,6 +3,9 @@
 
 #include <stdbool.h>
 
+// Terminal characters are ~2x taller than wide
+#define CELL_ASPECT_RATIO 2
+
 typedef enum { TILE_VOID, TILE_WALL, TILE_FLOOR, TILE_ROAD } Tile;
 
 typedef enum {

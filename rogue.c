@@ -10,11 +10,13 @@
 #include "ecs.h"
 #include "floor.h"
 #include "systems.h"
+#include "utils.h"
 
 #include "color.c"
 #include "ecs.c"
 #include "floor.c"
 #include "systems.c"
+#include "utils.c"
 
 #define MAP_W (116)
 #define MAP_H (36)
@@ -43,41 +45,45 @@ void create_player(World *world, Floor *floor) {
 
     Room first_room = floor->rooms[0];
     Position starting_pos = {
-        .x = first_room.x + 1 + rand() % (first_room.w - 2),
-        .y = first_room.y + 1 + rand() % (first_room.h - 2),
+        .x = first_room.x + random_int(1, first_room.w - 2),
+        .y = first_room.y + random_int(1, first_room.h - 2),
     };
     Renderable player_render = {.glyph = '@', .color_pair = COLOR_PLAYER};
+    CombatStats combat_stats = {
+        .name = "Player",
+        .hp = 100,
+        .max_hp = 100,
+        .attack = 10,
+        .defense = 0,
+    };
     world_add_position(world, player, starting_pos);
     world_add_renderable(world, player, player_render);
-    world_add_combat_stats(world, player,
-                           (CombatStats){
-                               .name = "Player",
-                               .hp = 100,
-                               .max_hp = 100,
-                               .attack = 10,
-                               .defense = 0,
-                           });
+    world_add_combat_stats(world, player, combat_stats);
 
     // Reveal the starting room
     floor_reveal_room(floor, 0);
+    floor_reveal_area(floor, 0, 0, 200);
 }
 
 Entity create_enemy(World *world, Floor *floor) {
     Entity enemy = world_create_entity(world);
-    Room room = floor->rooms[1 + rand() % (floor->room_count - 1)];
-    Position enemy_pos = {.x = room.x + 1 + rand() % (room.w - 2),
-                          .y = room.y + 1 + rand() % (room.h - 2)};
+    int room_idx = random_int(1, floor->room_count - 1);
+    Room room = floor->rooms[room_idx];
+    Position enemy_pos = {
+        .x = room.x + random_int(1, room.w - 2),
+        .y = room.y + random_int(1, room.h - 2),
+    };
     Renderable enemy_render = {.glyph = 'E', .color_pair = COLOR_ENEMY};
+    CombatStats combat_stats = {
+        .name = "Enemy",
+        .hp = 20,
+        .max_hp = 20,
+        .attack = 5,
+        .defense = 2,
+    };
     world_add_position(world, enemy, enemy_pos);
     world_add_renderable(world, enemy, enemy_render);
-    world_add_combat_stats(world, enemy,
-                           (CombatStats){
-                               .name = "Enemy",
-                               .hp = 20,
-                               .max_hp = 20,
-                               .attack = 5,
-                               .defense = 2,
-                           });
+    world_add_combat_stats(world, enemy, combat_stats);
     world_add_collider(world, enemy, (Collider){.blocks_movement = true});
 
     return enemy;

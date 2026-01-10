@@ -1,4 +1,8 @@
+#include <assert.h>
+#include <stdlib.h>
+
 #include "floor.h"
+#include "utils.h"
 
 bool in_bounds(Floor *f, int x, int y) {
     return x >= 0 && y >= 0 && x < f->width && y < f->height;
@@ -50,24 +54,26 @@ void carve_vertical_corridor(Floor *f, int y1, int y2, int x) {
 }
 
 bool rooms_intersect(Room a, Room b) {
-    return (a.x <= b.x + b.w && a.x + a.w >= b.x && a.y <= b.y + b.h &&
-            a.y + a.h >= b.y);
+    int gap = 2;
+    return (a.x - gap <= b.x + b.w && a.x + a.w + gap >= b.x &&
+            a.y - gap <= b.y + b.h && a.y + a.h + gap >= b.y);
 }
 
 void floor_generate_rooms(Floor *f, int room_min_size, int room_max_size) {
     f->room_count = 0;
     for (int i = 0; i < f->max_rooms; i++) {
         Room r;
-        r.w = room_min_size + rand() % (room_max_size - room_min_size + 1);
-        r.h =
-            room_min_size + rand() % ((room_max_size / 2) - room_min_size + 1);
+        r.w = random_int(room_min_size, room_max_size);
+        r.h = random_int(room_min_size / CELL_ASPECT_RATIO,
+                         room_max_size / CELL_ASPECT_RATIO);
 
-        int max_x = f->width - r.w - 1;
-        int max_y = f->height - r.h - 1;
-        if (max_x <= 1 || max_y <= 1)
+        int max_x = f->width - r.w - 2;
+        int max_y = f->height - r.h - 2;
+        if (max_x <= 2 || max_y <= 2)
             continue;
-        r.x = 1 + rand() % max_x;
-        r.y = 1 + rand() % max_y;
+
+        r.x = random_int(2, max_x);
+        r.y = random_int(2, max_y);
 
         bool failed = false;
         for (int j = 0; j < f->room_count; j++) {
@@ -84,7 +90,15 @@ void floor_generate_rooms(Floor *f, int room_min_size, int room_max_size) {
     }
 }
 
+int compare_rooms(const void *a, const void *b) {
+    Room *r1 = (Room *)a;
+    Room *r2 = (Room *)b;
+    return r1->x - r2->x;
+}
+
 void floor_connect_rooms(Floor *f) {
+    qsort(f->rooms, f->room_count, sizeof(Room), compare_rooms);
+
     for (int i = 1; i < f->room_count; i++) {
         Room r = f->rooms[i];
         Room prev = f->rooms[i - 1];
@@ -94,7 +108,7 @@ void floor_connect_rooms(Floor *f) {
         int x2 = prev.x + prev.w / 2;
         int y2 = prev.y + prev.h / 2;
 
-        if (rand() % 2) {
+        if (chance(0.5f)) {
             carve_horizontal_corridor(f, x1, x2, y1);
             carve_vertical_corridor(f, y1, y2, x2);
         } else {
@@ -128,9 +142,8 @@ void floor_build_walls(Floor *f) {
             f->tiles[i] = TILE_WALL;
 
             int count_horiz = floor_left + floor_right;
-            int count_vert = floor_up + floor_down;
 
-            if (count_vert) {
+            if (floor_down || floor_up) {
                 f->walls[i] = WALL_HORIZONTAL;
             } else if (count_horiz) {
                 f->walls[i] = WALL_VERTICAL;

@@ -1,5 +1,7 @@
 #include "ecs.h"
 
+#include "color.h"
+
 Entity world_create_entity(World *w) {
     Entity e = w->count++;
     w->entities[e] = e;
@@ -67,9 +69,8 @@ Renderable tile_glyph(Floor *f, int x, int y) {
         case WALL_VERTICAL:
             return (Renderable){.glyph = '|', .color_pair = COLOR_WALL};
         case WALL_HORIZONTAL:
-            return (Renderable){.glyph = '_', .color_pair = COLOR_WALL};
         case WALL_CORNER:
-            return (Renderable){.glyph = '+', .color_pair = COLOR_WALL};
+            return (Renderable){.glyph = '-', .color_pair = COLOR_WALL};
         default:
             return (Renderable){.glyph = '?', .color_pair = COLOR_UNKNOWN};
         }
