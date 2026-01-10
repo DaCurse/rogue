@@ -1,9 +1,10 @@
+#include "systems.h"
+
 #include <ncurses.h>
 #include <stdio.h>
 
 #include "color.h"
 #include "game.h"
-#include "systems.h"
 #include "utils.h"
 
 static Renderable tile_glyph(Floor *f, int x, int y) {
@@ -151,8 +152,9 @@ static CollisionResult check_collision(World *w, Floor *f, Entity e1,
 static void handle_player_movement(World *w, Position *p) {
     Tile current_tile = tile_at(w->floor, p->x, p->y);
     if (current_tile == TILE_ROAD) {
-        // On road: reveal only immediate surroundings (radius 1)
-        floor_reveal_area(w->floor, p->x, p->y, 0);
+        // On road: reveal immediate road tiles and nearby floor tiles
+        floor_reveal_filtered(w->floor, p->x, p->y, 2, (1 << TILE_ROAD));
+        floor_reveal_area(w->floor, p->x, p->y, 1);
         w->player_data.room_id = -1;
     } else if (current_tile == TILE_FLOOR) {
         // In room: reveal the entire room

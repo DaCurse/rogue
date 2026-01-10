@@ -100,6 +100,10 @@ void world_add_collider(World *w, Entity e, Collider c);
 void world_add_move_intent(World *w, Entity e, MoveIntent mi);
 void world_add_collision_event(World *w, Entity e, CollisionEvent ce);
 void world_remove_entity(World *w, Entity e);
+bool world_is_occupied(World *w, int x, int y);
+int world_get_unoccupied_positions(World *w, Room *r, Position *out_arr,
+                                   int max_len);
+bool world_get_random_unoccupied_in_room(World *w, Room *r, Position *out_pos);
 void world_logf(World *w, const char *format, ...);
 
 #endif // WORLD_H

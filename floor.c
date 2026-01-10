@@ -1,8 +1,9 @@
+#include "floor.h"
+
 #include <assert.h>
 #include <stdlib.h>
 
 #include "config.h"
-#include "floor.h"
 #include "utils.h"
 
 bool in_bounds(Floor *f, int x, int y) {
@@ -284,14 +285,26 @@ void floor_build_walls(Floor *f) {
 }
 
 void floor_reveal_area(Floor *f, int x, int y, int radius) {
+    floor_reveal_filtered(f, x, y, radius, ~0u);
+}
+
+void floor_reveal_filtered(Floor *f, int x, int y, int radius,
+                           unsigned int mask) {
     for (int dy = -radius; dy <= radius; dy++) {
         for (int dx = -radius; dx <= radius; dx++) {
             if (dx * dx + dy * dy <= radius * radius) {
                 int nx = x + dx;
                 int ny = y + dy;
-                if (in_bounds(f, nx, ny)) {
-                    f->fog_of_war[nx + f->width * ny] = true;
-                }
+                if (!in_bounds(f, nx, ny))
+                    continue;
+
+                Tile t = tile_at(f, nx, ny);
+                // Check if the tile type matches the bitmask.
+                // (1 << t) creates a bit with the index of the tile enum value.
+                if (!(mask & (1 << t)))
+                    continue;
+
+                f->fog_of_war[nx + f->width * ny] = true;
             }
         }
     }

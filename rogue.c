@@ -7,6 +7,7 @@
 #include <time.h>
 
 #include "color.h"
+#include "config.h"
 #include "floor.h"
 #include "game.h"
 #include "systems.h"
@@ -14,13 +15,12 @@
 #include "world.h"
 
 #include "color.c"
+#include "enemy.c"
 #include "floor.c"
 #include "game.c"
 #include "systems.c"
 #include "utils.c"
 #include "world.c"
-
-#include "config.h"
 
 WINDOW *create_window(int h, int w, int y, int x) {
     WINDOW *win = newwin(h, w, y, x);

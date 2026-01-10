@@ -1,6 +1,6 @@
-#include <ncurses.h>
-
 #include "color.h"
+
+#include <ncurses.h>
 
 static short custom_color = COLOR_WHITE;
 static short COLOR_GRAY;
@@ -25,5 +25,13 @@ void init_colors(void) {
     init_pair(COLOR_PAIR_PLAYER, COLOR_WHITE, COLOR_GREEN);
     init_pair(COLOR_PAIR_STATUS, COLOR_WHITE, COLOR_YELLOW);
     init_pair(COLOR_PAIR_ENEMY, COLOR_WHITE, COLOR_RED);
+
+    init_pair(COLOR_PAIR_ENEMY_RAT, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(COLOR_PAIR_ENEMY_GOBLIN, COLOR_GREEN, COLOR_BLACK);
+    init_pair(COLOR_PAIR_ENEMY_ORC, COLOR_RED, COLOR_BLACK);
+    init_pair(COLOR_PAIR_ENEMY_SNAKE, COLOR_CYAN, COLOR_BLACK);
+    init_pair(COLOR_PAIR_ENEMY_ZOMBIE, COLOR_WHITE, COLOR_BLACK);
+    init_pair(COLOR_PAIR_ENEMY_BAT, COLOR_MAGENTA, COLOR_BLACK);
+
     init_pair(COLOR_PAIR_EXIT, COLOR_GRAY, COLOR_BLACK);
 }

@@ -1,9 +1,11 @@
 #include "world.h"
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "color.h"
+#include "utils.h"
 
 Entity world_create_entity(World *w) {
     Entity e = w->count++;
@@ -50,6 +52,48 @@ void world_remove_entity(World *w, Entity e) {
     w->has_collider[e] = false;
     w->has_move_intent[e] = false;
     w->has_collision_event[e] = false;
+}
+
+bool world_is_occupied(World *w, int x, int y) {
+    for (int e = 0; e < w->count; e++) {
+        if (!w->has_position[e])
+            continue;
+        if (w->positions[e].x == x && w->positions[e].y == y) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int world_get_unoccupied_positions(World *w, Room *r, Position *out_arr,
+                                   int max_len) {
+    int count = 0;
+    for (int y = r->y + 1; y < r->y + r->h - 1; y++) {
+        for (int x = r->x + 1; x < r->x + r->w - 1; x++) {
+            if (world_is_occupied(w, x, y))
+                continue;
+
+            if (count < max_len) {
+                out_arr[count++] = (Position){.x = x, .y = y};
+            }
+        }
+    }
+
+    return count;
+}
+
+bool world_get_random_unoccupied_in_room(World *w, Room *r, Position *out_pos) {
+    Position candidates[ROOM_MAX_SIZE * ROOM_MAX_SIZE];
+    int count = world_get_unoccupied_positions(w, r, candidates,
+                                               ROOM_MAX_SIZE * ROOM_MAX_SIZE);
+
+    if (count == 0)
+        return false;
+
+    int idx = random_int(0, count - 1);
+    *out_pos = candidates[idx];
+
+    return true;
 }
 
 void world_logf(World *w, const char *format, ...) {
