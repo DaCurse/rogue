@@ -5,8 +5,8 @@
 #define MAP_H (50)
 #define STATUS_H (1)
 #define LOG_H (1)
-#define MAX_ROOMS (15)
-#define ROOM_MIN_SIZE (5)
+#define MAX_ROOMS (6)
+#define ROOM_MIN_SIZE (10)
 #define ROOM_MAX_SIZE (25)
 
 #endif // CONFIG_H

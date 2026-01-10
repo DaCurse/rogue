@@ -66,7 +66,7 @@ Renderable tile_glyph(Floor *f, int x, int y) {
     case TILE_FLOOR:
         return (Renderable){.glyph = '.', .color_pair = COLOR_FLOOR};
     case TILE_ROAD:
-        return (Renderable){.glyph = ' ', .color_pair = COLOR_ROAD};
+        return (Renderable){.glyph = '#', .color_pair = COLOR_ROAD};
     case TILE_WALL:
         switch (f->walls[x + f->width * y]) {
         case WALL_VERTICAL:

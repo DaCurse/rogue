@@ -11,8 +11,10 @@ void system_render_map(World *w) {
     // Render floor
     for (int y = 0; y < w->floor->height; y++) {
         for (int x = 0; x < w->floor->width; x++) {
+#ifndef DEBUG_REVEAL_MAP
             if (!w->floor->fog_of_war[x + w->floor->width * y])
                 continue;
+#endif
 
             Renderable r = tile_glyph(w->floor, x, y);
             mvwaddch(w->map.win, y, x, r.glyph | COLOR_PAIR(r.color_pair));
@@ -26,8 +28,10 @@ void system_render_map(World *w) {
 
         Position *p = &w->positions[e];
 
+#ifndef DEBUG_REVEAL_MAP
         if (w->floor->fog_of_war[p->x + w->floor->width * p->y] == false)
             continue;
+#endif
 
         Renderable *r = &w->renderables[e];
 

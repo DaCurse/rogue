@@ -17,6 +17,15 @@ ifneq ($(NCURSES_LIB),)
 	LDFLAGS += -L"$(NCURSES_LIB)"
 endif
 
+# Debug configurations
+ifdef reveal_map
+    CFLAGS += -DDEBUG_REVEAL_MAP
+endif
+
+ifdef paint_roads
+    CFLAGS += -DDEBUG_PAINT_ROADS
+endif
+
 rogue: rogue.c
 	$(CC) rogue.c $(CFLAGS) $(LDFLAGS) -lncurses -o $@
 

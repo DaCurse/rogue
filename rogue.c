@@ -60,8 +60,16 @@ void create_player(World *world, Floor *floor) {
 }
 
 Entity create_enemy(World *world, Floor *floor) {
+    if (floor->room_count == 0)
+        return -1;
+
     Entity enemy = world_create_entity(world);
-    int room_idx = random_int(1, floor->room_count - 1);
+    int room_idx = 0;
+
+    if (floor->room_count > 1) {
+        room_idx = random_int(1, floor->room_count - 1);
+    }
+
     Room room = floor->rooms[room_idx];
     Position enemy_pos = {
         .x = room.x + random_int(1, room.w - 2),
