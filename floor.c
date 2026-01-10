@@ -14,12 +14,12 @@ Tile tile_at(Floor *f, int x, int y) {
     if (!in_bounds(f, x, y))
         return TILE_WALL;
 
-    return f->tiles[x + f->width * y];
+    return f->data[x + f->width * y].tile;
 }
 
 void floor_fill_void(Floor *f) {
     for (int i = 0; i < f->width * f->height; i++) {
-        f->tiles[i] = TILE_VOID;
+        f->data[i].tile = TILE_VOID;
         f->walls[i] = WALL_UNSET;
     }
 }
@@ -30,7 +30,7 @@ void carve_room(Floor *f, Room r) {
     for (int y = r.y; y < r.y + r.h; y++) {
         for (int x = r.x; x < r.x + r.w; x++) {
             int i = x + f->width * y;
-            f->tiles[i] = TILE_FLOOR;
+            f->data[i].tile = TILE_FLOOR;
         }
     }
 
@@ -114,7 +114,8 @@ static void draw_connectivity(Floor *f, int u, int v, bool horizontal,
     // Optimization: if returning to 0, check if already connected
     if (offset == 0) {
         int back_i = get_idx(f, u - 1, v, horizontal);
-        if (f->tiles[back_i] == TILE_ROAD || f->tiles[back_i] == TILE_FLOOR)
+        if (f->data[back_i].tile == TILE_ROAD ||
+            f->data[back_i].tile == TILE_FLOOR)
             return;
     }
 
@@ -131,10 +132,10 @@ static void draw_connectivity(Floor *f, int u, int v, bool horizontal,
     int fill_i = get_idx(f, fill_u, fill_v, horizontal);
     if (is_safe(f, fill_i, bad_wall)) {
 #ifdef DEBUG_PAINT_ROADS
-        f->tiles[fill_i] = TILE_ROAD;
+        f->data[fill_i].tile = TILE_ROAD;
 #else
-        if (f->tiles[fill_i] != TILE_FLOOR)
-            f->tiles[fill_i] = TILE_ROAD;
+        if (f->data[fill_i].tile != TILE_FLOOR)
+            f->data[fill_i].tile = TILE_ROAD;
 #endif
     }
 }
@@ -161,10 +162,10 @@ static void carve_safe_line(Floor *f, int u1, int u2, int v, bool horizontal) {
         int current_i = get_idx(f, u, v + offset, horizontal);
 
 #ifdef DEBUG_PAINT_ROADS
-        f->tiles[current_i] = TILE_ROAD;
+        f->data[current_i].tile = TILE_ROAD;
 #else
-        if (f->tiles[current_i] != TILE_FLOOR)
-            f->tiles[current_i] = TILE_ROAD;
+        if (f->data[current_i].tile != TILE_FLOOR)
+            f->data[current_i].tile = TILE_ROAD;
 #endif
 
         if (u > start && offset != prev_offset) {
@@ -227,7 +228,7 @@ int compare_rooms(const void *a, const void *b) {
 }
 
 void floor_connect_rooms(Floor *f) {
-    qsort(f->rooms, f->room_count, sizeof(Room), compare_rooms);
+    qsort(f->rooms, (size_t)f->room_count, sizeof(Room), compare_rooms);
 
     for (int i = 1; i < f->room_count; i++) {
         Room r = f->rooms[i];
@@ -252,7 +253,7 @@ void floor_build_walls(Floor *f) {
     for (int y = 0; y < f->height; y++) {
         for (int x = 0; x < f->width; x++) {
             int i = x + f->width * y;
-            if (f->tiles[i] != TILE_VOID)
+            if (f->data[i].tile != TILE_VOID)
                 continue;
 
             bool floor_up = tile_at(f, x, y - 1) == TILE_FLOOR;
@@ -269,7 +270,7 @@ void floor_build_walls(Floor *f) {
                 !floor_nw && !floor_ne && !floor_sw && !floor_se)
                 continue;
 
-            f->tiles[i] = TILE_WALL;
+            f->data[i].tile = TILE_WALL;
 
             int count_horiz = floor_left + floor_right;
 
@@ -304,7 +305,7 @@ void floor_reveal_filtered(Floor *f, int x, int y, int radius,
                 if (!(mask & (1 << t)))
                     continue;
 
-                f->fog_of_war[nx + f->width * ny] = true;
+                f->data[nx + f->width * ny].fog = true;
             }
         }
     }
@@ -329,7 +330,7 @@ void floor_reveal_room(Floor *f, int room_index) {
     for (int y = r->y - 1; y <= r->y + r->h; y++) {
         for (int x = r->x - 1; x <= r->x + r->w; x++) {
             if (in_bounds(f, x, y)) {
-                f->fog_of_war[x + f->width * y] = true;
+                f->data[x + f->width * y].fog = true;
             }
         }
     }

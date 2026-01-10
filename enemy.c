@@ -71,21 +71,22 @@ static void spawn_single_enemy_at(World *world, Position pos, int floor_depth) {
 
     // Calculate Scaled Stats
     float scale = tmpl->scale_factor;
+    float depth_factor = (float)floor_depth;
 
     // HP Bonus: Bigger scaling
-    int hp_var = (int)(floor_depth * scale * SCALE_HP_VAR);
-    int hp_bonus = (int)(floor_depth * scale * SCALE_HP_BASE) +
+    int hp_var = (int)(depth_factor * scale * SCALE_HP_VAR);
+    int hp_bonus = (int)(depth_factor * scale * SCALE_HP_BASE) +
                    random_int(0, MAX(1, hp_var));
     int final_hp = tmpl->base_hp + hp_bonus;
 
     // Atk Bonus: Moderate scaling
-    int atk_var = (int)(floor_depth * scale * SCALE_ATK_VAR);
-    int atk_bonus = (int)(floor_depth * scale * SCALE_ATK_BASE) +
+    int atk_var = (int)(depth_factor * scale * SCALE_ATK_VAR);
+    int atk_bonus = (int)(depth_factor * scale * SCALE_ATK_BASE) +
                     random_int(0, MAX(1, atk_var));
     int final_atk = tmpl->base_attack + atk_bonus;
 
     // Def Bonus: Small scaling (capped/slow)
-    int def_var = (int)(floor_depth * scale * SCALE_DEF_VAR);
+    int def_var = (int)(depth_factor * scale * SCALE_DEF_VAR);
     int def_bonus = random_int(0, MAX(1, def_var));
     int final_def = tmpl->base_defense + def_bonus;
 
@@ -118,14 +119,13 @@ void spawn_enemies_for_level(World *world) {
     int threat_budget =
         BASE_THREAT_BUDGET + (THREAT_PER_FLOOR * (floor_depth - 1));
     int max_per_room = get_max_enemies_per_room(floor_depth);
-    int room_count = world->floor->room_count;
 
     // Cache available positions for each room
     Position room_free_tiles[MAX_ROOMS][ROOM_MAX_SIZE * ROOM_MAX_SIZE];
     int room_free_counts[MAX_ROOMS];
     int room_next_idx[MAX_ROOMS];
 
-    for (int i = 0; i < room_count; i++) {
+    for (int i = 0; i < world->floor->room_count; i++) {
         room_next_idx[i] = 0;
         int count = world_get_unoccupied_positions(
             world, &world->floor->rooms[i], room_free_tiles[i],
@@ -140,7 +140,7 @@ void spawn_enemies_for_level(World *world) {
     int room_slots[MAX_SPAWN_SLOTS];
     int slot_count = 0;
 
-    for (int i = 0; i < room_count; i++) {
+    for (int i = 0; i < world->floor->room_count; i++) {
         for (int k = 0; k < max_per_room; k++) {
             if (slot_count < MAX_SPAWN_SLOTS) {
                 room_slots[slot_count++] = i;

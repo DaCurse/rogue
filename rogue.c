@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <ctype.h>
 #include <ncurses.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -23,6 +22,8 @@
 #include "world.c"
 
 WINDOW *create_window(int h, int w, int y, int x) {
+    assert(h > 0 && w > 0);
+
     WINDOW *win = newwin(h, w, y, x);
     if (win == NULL) {
         endwin();
@@ -36,15 +37,15 @@ WINDOW *create_window(int h, int w, int y, int x) {
 int main(int argc, char **argv) {
     unsigned int seed;
     if (argc > 1) {
-        seed = atoi(argv[1]);
+        seed = (unsigned int)strtoul(argv[1], NULL, 10);
     } else {
-        seed = time(NULL);
+        seed = (unsigned int)time(NULL);
     }
     srand(seed);
 
     char player_name[PLAYER_NAME_MAX_LENGTH];
     printf("What is your name, adventurer? ");
-    if (fgets(player_name, sizeof(player_name), stdin) == NULL) {
+    if (fgets(player_name, sizeof(player_name), stdin) == NULL || strlen(player_name) == 1) {
         strncpy(player_name, "Player", sizeof(player_name) - 1);
         player_name[sizeof(player_name) - 1] = '\0';
     } else {
@@ -55,16 +56,14 @@ int main(int argc, char **argv) {
     }
 
     // Initialize floor
-    Tile tiles[MAP_H * MAP_W];
+    TileWithFog map_data[MAP_H * MAP_W];
     WallType walls[MAP_H * MAP_W];
-    bool fog_of_war[MAP_H * MAP_W] = {0};
     Room rooms[MAX_ROOMS];
     Floor floor = {.width = MAP_W,
                    .height = MAP_H,
 
-                   .tiles = tiles,
+                   .data = map_data,
                    .walls = walls,
-                   .fog_of_war = fog_of_war,
 
                    .room_count = 0,
                    .max_rooms = MAX_ROOMS,
@@ -101,11 +100,9 @@ int main(int argc, char **argv) {
     create_player(&world, player_name);
     setup_new_level(&world);
 
-    world.map = (RenderContext){.win = map_win};
-    world.log_window = (RenderContext){.win = log_win};
-    world.status_bar = (RenderContext){.win = status_win};
-    printf("sizeof(World) = %zu bytes\n", sizeof(World));
-    exit(0);
+    world.map.win = map_win;
+    world.log_window.win = log_win;
+    world.status_bar.win = status_win;
 
     // Main game loop
     while (true) {

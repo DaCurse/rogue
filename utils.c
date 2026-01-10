@@ -9,7 +9,7 @@ int random_int(int min, int max) {
 }
 
 bool chance(float percentage) {
-    return (rand() / (float)RAND_MAX) < percentage;
+    return ((float)rand() / (float)RAND_MAX) < percentage;
 }
 
 void shuffle_array(void *array, int n, size_t size) {
@@ -20,8 +20,8 @@ void shuffle_array(void *array, int n, size_t size) {
             int j = random_int(0, i);
 
             // Swap elements byte-by-byte
-            char *p1 = arr + i * size;
-            char *p2 = arr + j * size;
+            char *p1 = arr + (size_t)i * size;
+            char *p2 = arr + (size_t)j * size;
             for (size_t k = 0; k < size; k++) {
                 char t = p1[k];
                 p1[k] = p2[k];

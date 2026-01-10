@@ -21,11 +21,15 @@ typedef struct {
 } Room;
 
 typedef struct {
+    Tile tile;
+    bool fog;
+} TileWithFog;
+
+typedef struct {
     int width, height;
 
-    Tile *tiles;
+    TileWithFog *data;
     WallType *walls;
-    bool *fog_of_war;
 
     int room_count;
     int max_rooms;

@@ -10,53 +10,47 @@
 Entity world_create_entity(World *w) {
     Entity e = w->count++;
     w->entities[e] = e;
-    w->has_position[e] = false;
-    w->has_renderable[e] = false;
+    memset(&w->has[e], 0, sizeof(ComponentFlags));
     return e;
 }
 
 void world_add_position(World *w, Entity e, Position pos) {
     w->positions[e] = pos;
-    w->has_position[e] = true;
+    w->has[e].position = true;
 }
 
 void world_add_renderable(World *w, Entity e, Renderable r) {
     w->renderables[e] = r;
-    w->has_renderable[e] = true;
+    w->has[e].renderable = true;
 }
 
 void world_add_combat_stats(World *w, Entity e, CombatStats cs) {
     w->combat_stats[e] = cs;
-    w->has_combat_stats[e] = true;
+    w->has[e].combat_stats = true;
 }
 
 void world_add_collider(World *w, Entity e, Collider c) {
     w->colliders[e] = c;
-    w->has_collider[e] = true;
+    w->has[e].collider = true;
 }
 
 void world_add_move_intent(World *w, Entity e, MoveIntent mi) {
     w->move_intents[e] = mi;
-    w->has_move_intent[e] = true;
+    w->has[e].move_intent = true;
 }
 
 void world_add_collision_event(World *w, Entity e, CollisionEvent ce) {
     w->collision_events[e] = ce;
-    w->has_collision_event[e] = true;
+    w->has[e].collision_event = true;
 }
 
 void world_remove_entity(World *w, Entity e) {
-    w->has_position[e] = false;
-    w->has_renderable[e] = false;
-    w->has_combat_stats[e] = false;
-    w->has_collider[e] = false;
-    w->has_move_intent[e] = false;
-    w->has_collision_event[e] = false;
+    memset(&w->has[e], 0, sizeof(ComponentFlags));
 }
 
 bool world_is_occupied(World *w, int x, int y) {
     for (int e = 0; e < w->count; e++) {
-        if (!w->has_position[e])
+        if (!w->has[e].position)
             continue;
         if (w->positions[e].x == x && w->positions[e].y == y) {
             return true;

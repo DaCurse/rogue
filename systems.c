@@ -1,5 +1,6 @@
 #include "systems.h"
 
+#include <ctype.h>
 #include <ncurses.h>
 #include <stdio.h>
 
@@ -39,30 +40,32 @@ void system_render_map(World *w) {
     for (int y = 0; y < w->floor->height; y++) {
         for (int x = 0; x < w->floor->width; x++) {
 #ifndef DEBUG_REVEAL_MAP
-            if (!w->floor->fog_of_war[x + w->floor->width * y])
+            if (!w->floor->data[x + w->floor->width * y].fog)
                 continue;
 #endif
 
             Renderable r = tile_glyph(w->floor, x, y);
-            mvwaddch(w->map.win, y, x, r.glyph | COLOR_PAIR(r.color_pair));
+            mvwaddch(w->map.win, y, x,
+                     (chtype)r.glyph | COLOR_PAIR(r.color_pair));
         }
     }
 
     // Render entities
     for (int e = 0; e < w->count; e++) {
-        if (!(w->has_position[e] && w->has_renderable[e]))
+        if (!(w->has[e].position && w->has[e].renderable))
             continue;
 
         Position *p = &w->positions[e];
 
 #ifndef DEBUG_REVEAL_MAP
-        if (w->floor->fog_of_war[p->x + w->floor->width * p->y] == false)
+        if (w->floor->data[p->x + w->floor->width * p->y].fog == false)
             continue;
 #endif
 
         Renderable *r = &w->renderables[e];
 
-        mvwaddch(w->map.win, p->y, p->x, r->glyph | COLOR_PAIR(r->color_pair));
+        mvwaddch(w->map.win, p->y, p->x,
+                 (chtype)r->glyph | COLOR_PAIR(r->color_pair));
     }
 
     wbkgd(w->map.win, COLOR_PAIR(COLOR_PAIR_VOID));
@@ -89,7 +92,8 @@ void system_render_logs(World *w) {
             char suffix[32];
             snprintf(suffix, sizeof(suffix), " (x%d)", w->log.repeat_counts[i]);
 
-            int max_msg_len = LOG_MESSAGE_SIZE - strlen(suffix) - 1;
+            int max_msg_len =
+                MAX(0, (int)LOG_MESSAGE_SIZE - (int)strlen(suffix) - 1);
             mvwprintw(w->log_window.win, i, 0, " %.*s%s", max_msg_len,
                       w->log.messages[i], suffix);
         } else {
@@ -114,10 +118,10 @@ void system_render_status_bar(World *w) {
     wrefresh(w->status_bar.win);
 }
 
-void system_player_input(World *w, char key) {
+void system_player_input(World *w, int ch) {
     int dx = 0, dy = 0;
 
-    switch (tolower(key)) {
+    switch (tolower(ch)) {
     case 'w':
         dy = -1;
         break;
@@ -150,7 +154,7 @@ static CollisionResult check_collision(World *w, Floor *f, Entity e1,
     for (int e2 = 0; e2 < w->count; e2++) {
         if (e1 == e2)
             continue;
-        if (!(w->has_position[e2] && w->has_collider[e2]))
+        if (!(w->has[e2].position && w->has[e2].collider))
             continue;
 
         Position *p2 = &w->positions[e2];
@@ -184,7 +188,7 @@ static void handle_player_movement(World *w, Position *p) {
 
 void system_movement(World *w) {
     for (int e = 0; e < w->count; e++) {
-        if (!(w->has_position[e] && w->has_move_intent[e]))
+        if (!(w->has[e].position && w->has[e].move_intent))
             continue;
 
         Position *p = &w->positions[e];
@@ -215,7 +219,7 @@ void system_movement(World *w) {
             break;
         }
 
-        w->has_move_intent[e] = false;
+        w->has[e].move_intent = false;
     }
 }
 
@@ -246,7 +250,7 @@ static void log_combat_event(World *w, const char *attacker,
 
 void system_combat(World *w) {
     for (int e = 0; e < w->count; e++) {
-        if (!w->has_collision_event[e])
+        if (!w->has[e].collision_event)
             continue;
 
         CollisionEvent *ce = &w->collision_events[e];
@@ -256,7 +260,7 @@ void system_combat(World *w) {
         // Check if either entity is the player and both have combat stats
         if (!(attacker == w->player || defender == w->player))
             continue;
-        if (!(w->has_combat_stats[attacker] && w->has_combat_stats[defender]))
+        if (!(w->has[attacker].combat_stats && w->has[defender].combat_stats))
             continue;
 
         CombatStats *attacker_stats = &w->combat_stats[attacker];
@@ -273,18 +277,18 @@ void system_combat(World *w) {
         log_combat_event(w, attacker_stats->name, defender_stats->name,
                          damage_to_defender, damage_to_attacker);
 
-        w->has_collision_event[e] = false;
+        w->has[e].collision_event = false;
     }
 }
 
 void system_exit_room(World *w) {
-    if (!w->has_collision_event[w->player])
+    if (!w->has[w->player].collision_event)
         return;
 
     CollisionEvent *ce = &w->collision_events[w->player];
     if (ce->target == w->room_exit) {
         // Player collided with room exit
-        w->has_collision_event[w->player] = false;
+        w->has[w->player].collision_event = false;
         world_logf(w, "You descend deeper into the dungeon.");
 
         setup_new_level(w);
@@ -293,7 +297,7 @@ void system_exit_room(World *w) {
 
 void system_death(World *w) {
     for (int e = 0; e < w->count; e++) {
-        if (!w->has_combat_stats[e])
+        if (!w->has[e].combat_stats)
             continue;
 
         CombatStats *cs = &w->combat_stats[e];

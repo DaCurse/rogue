@@ -9,8 +9,8 @@
 #include "floor.h"
 
 #define MAX_ENTITIES (128)
-#define LOG_MESSAGE_SIZE (MAP_W)
 #define INVALID_ENTITY (-1)
+#define LOG_MESSAGE_SIZE (MAP_W)
 #define PLAYER_NAME_MAX_LENGTH (16)
 
 typedef int Entity;
@@ -69,6 +69,15 @@ typedef struct {
 } MessageLog;
 
 typedef struct {
+    bool position        : 1;
+    bool renderable      : 1;
+    bool combat_stats    : 1;
+    bool collider        : 1;
+    bool move_intent     : 1;
+    bool collision_event : 1;
+} ComponentFlags;
+
+typedef struct {
     unsigned int seed;
     RenderContext map;
     RenderContext log_window;
@@ -92,12 +101,7 @@ typedef struct {
     MoveIntent move_intents[MAX_ENTITIES];
     CollisionEvent collision_events[MAX_ENTITIES];
 
-    bool has_position[MAX_ENTITIES];
-    bool has_renderable[MAX_ENTITIES];
-    bool has_combat_stats[MAX_ENTITIES];
-    bool has_collider[MAX_ENTITIES];
-    bool has_move_intent[MAX_ENTITIES];
-    bool has_collision_event[MAX_ENTITIES];
+    ComponentFlags has[MAX_ENTITIES];
 } World;
 
 Entity world_create_entity(World *w);

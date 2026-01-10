@@ -4,3 +4,4 @@ TabWidth: 4
 UseTab: Never
 InsertNewlineAtEOF: true
 KeepEmptyLinesAtEOF: true
+AlignConsecutiveBitFields: true

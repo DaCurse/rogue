@@ -59,7 +59,7 @@ void setup_new_level(World *w) {
 
     // Reset fog of war
     for (int i = 0; i < w->floor->width * w->floor->height; i++) {
-        w->floor->fog_of_war[i] = false;
+        w->floor->data[i].fog = false;
     }
 
     // Remove all entities except player
@@ -81,7 +81,7 @@ void setup_new_level(World *w) {
     Position player_pos_start;
 
     // Temporarily remove player position to allow finding a spot
-    w->has_position[w->player] = false;
+    w->has[w->player].position = false;
     if (!world_get_random_unoccupied_in_room(w, first_room,
                                              &player_pos_start)) {
         // Fallback to center if strangely full
