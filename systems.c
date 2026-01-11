@@ -8,7 +8,7 @@
 #include "game.h"
 #include "utils.h"
 
-#define MESSAGE_BOREOM_THRESHOLD (10)
+#define MESSAGE_BOREDOM_THRESHOLD (15)
 
 static Renderable tile_glyph(Floor *f, int x, int y) {
     switch (tile_at(f, x, y)) {
@@ -72,7 +72,7 @@ void system_render_map(World *w) {
 void system_render_logs(World *w) {
     // Message boredom: clear message if too old
     if (w->player_data.turn_count - w->log.turn_timestamp >
-        MESSAGE_BOREOM_THRESHOLD) {
+        MESSAGE_BOREDOM_THRESHOLD) {
         for (int i = 0; i < LOG_H; i++) {
             w->log.messages[i][0] = '\0';
             w->log.repeat_counts[i] = 0;
