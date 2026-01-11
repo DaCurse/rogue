@@ -7,7 +7,7 @@
 
 // Spawning budget for first floor
 #define BASE_THREAT_BUDGET (3)
-// Additional points added to the budget for deeper each floor
+// Additional points added to the budget for each deeper floor
 #define THREAT_PER_FLOOR (3)
 // Floor depth at which density increases to Tier 1
 #define DENSITY_TIER_1_DEPTH (4)
