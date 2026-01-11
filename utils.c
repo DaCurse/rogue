@@ -1,6 +1,8 @@
 #include "utils.h"
 
+#include <ctype.h>
 #include <stdlib.h>
+#include <string.h>
 
 int random_int(int min, int max) {
     if (max < min)
@@ -30,3 +32,14 @@ void shuffle_array(void *array, int n, size_t size) {
         }
     }
 }
+
+void filter_non_alpha(char *s) {
+    char *dst = s;
+    for (; *s; s++) {
+        if (isalpha((unsigned char)*s)) {
+            *dst++ = *s;
+        }
+    }
+    *dst = '\0';
+}
+

@@ -45,15 +45,11 @@ int main(int argc, char **argv) {
 
     char player_name[PLAYER_NAME_MAX_LENGTH];
     printf("What is your name, adventurer? ");
-    if (fgets(player_name, sizeof(player_name), stdin) == NULL ||
-        strlen(player_name) == 1) {
-        strncpy(player_name, "Player", sizeof(player_name) - 1);
-        player_name[sizeof(player_name) - 1] = '\0';
-    } else {
-        size_t len = strlen(player_name);
-        if (len > 0 && player_name[len - 1] == '\n') {
-            player_name[len - 1] = '\0';
-        }
+    if (fgets(player_name, sizeof(player_name), stdin) != NULL) {
+        filter_non_alpha(player_name);
+    }
+    if (player_name[0] == '\0') {
+        strcpy(player_name, PLAYER_DEFAULT_NAME);
     }
 
     // Initialize floor

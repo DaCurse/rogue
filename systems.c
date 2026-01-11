@@ -119,15 +119,19 @@ void system_player_input(World *w, int ch) {
     int dx = 0, dy = 0;
 
     switch (tolower(ch)) {
+    case KEY_UP:
     case 'w':
         dy = -1;
         break;
+    case KEY_DOWN:
     case 's':
         dy = 1;
         break;
+    case KEY_LEFT:
     case 'a':
         dx = -1;
         break;
+    case KEY_RIGHT:
     case 'd':
         dx = 1;
         break;

@@ -22,7 +22,7 @@ void create_player(World *world, char *name) {
         .attack = 10,
         .defense = 0,
     };
-    strncpy(combat_stats.name, name, sizeof(combat_stats.name) - 1);
+    snprintf(combat_stats.name, sizeof(combat_stats.name), "%s", name);
 
     // Position will be set in setup_new_level
     world_add_renderable(world, player, player_render);
