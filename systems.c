@@ -196,8 +196,7 @@ void system_movement(World *w) {
             break;
 
         case COLLISION_NONE:
-            p->x = new_x;
-            p->y = new_y;
+            world_move_entity(w, e, new_x, new_y);
 
             if (e == w->player) {
                 handle_player_movement(w, p);
@@ -296,6 +295,7 @@ void system_death(World *w) {
 
             if (e == w->player) {
                 w->player_data.game_over = true;
+                world_logf(w, "Game over! Press any key to continue...");
             }
 
             // Remove all components (entity cleanup)

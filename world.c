@@ -37,10 +37,24 @@ static void world_remove_entity_from_spatial_index(World *w, Entity e) {
         return;
 
     Position pos = w->positions[e];
-    int x = pos.x, y = pos.y;
-    if (in_bounds(w->floor, x, y) && w->entity_at[y][x] == e) {
-        w->entity_at[y][x] = INVALID_ENTITY;
-    }
+    if (!in_bounds(w->floor, pos.x, pos.y))
+        return;
+
+    if (w->entity_at[pos.y][pos.x] == e)
+        w->entity_at[pos.y][pos.x] = INVALID_ENTITY;
+}
+
+void world_move_entity(World *w, Entity e, int new_x, int new_y) {
+    world_remove_entity_from_spatial_index(w, e);
+
+    assert(in_bounds(w->floor, new_x, new_y));
+    assert(w->entity_at[new_y][new_x] == INVALID_ENTITY &&
+           "tile already occupied");
+
+    w->positions[e].x = new_x;
+    w->positions[e].y = new_y;
+
+    w->entity_at[new_y][new_x] = e;
 }
 
 void world_add_position(World *w, Entity e, Position pos) {
@@ -107,10 +121,12 @@ void world_add_collision_event(World *w, Entity e, CollisionEvent ce) {
 }
 
 void world_remove_entity(World *w, Entity e) {
+    // Remove from spatial index while position component is still valid
+    world_remove_entity_from_spatial_index(w, e);
+    // Now we can clear all components
     memset(&w->has[e], 0, sizeof(ComponentFlags));
     remove_from_list(w->render_list, &w->render_list_count, e);
     remove_from_list(w->combatants, &w->combatants_count, e);
-    world_remove_entity_from_spatial_index(w, e);
 }
 
 int world_get_unoccupied_positions(World *w, Room *r, Position *out_arr,

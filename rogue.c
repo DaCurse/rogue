@@ -108,8 +108,9 @@ int main(int argc, char **argv) {
         system_render_logs(&world);
 
         int ch = wgetch(map_win);
-        if (ch == 'q')
+        if (ch == 'q' || world.player_data.game_over) {
             break;
+        }
 
         world.player_data.turn_count++;
         system_player_input(&world, ch);
@@ -117,15 +118,6 @@ int main(int argc, char **argv) {
         system_combat(&world);
         system_exit_room(&world);
         system_death(&world);
-
-        if (world.player_data.game_over) {
-            world_logf(&world, "Game Over! Press any key to quit...");
-            system_render_map(&world);
-            system_render_status_bar(&world);
-            system_render_logs(&world);
-            wgetch(map_win);
-            break;
-        }
     }
 
     endwin();

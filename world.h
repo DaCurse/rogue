@@ -122,6 +122,7 @@ typedef struct {
 } World;
 
 Entity world_create_entity(World *w);
+void world_move_entity(World *w, Entity e, int new_x, int new_y);
 void world_add_position(World *w, Entity e, Position pos);
 void world_add_renderable(World *w, Entity e, Renderable r);
 void world_add_combat_stats(World *w, Entity e, CombatStats cs);
