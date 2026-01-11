@@ -143,8 +143,8 @@ static void draw_connectivity(Floor *f, int u, int v, bool horizontal,
 // Main logic for safely carving a straight line that can nudge around
 // obstacles.
 static void carve_safe_line(Floor *f, int u1, int u2, int v, bool horizontal) {
-    int start = (u1 < u2 ? u1 : u2);
-    int end = (u1 > u2 ? u1 : u2);
+    int start = MIN(u1, u2);
+    int end = MAX(u1, u2);
 
     WallType bad_wall = horizontal ? WALL_HORIZONTAL : WALL_VERTICAL;
     WallType perp_bad_wall = horizontal ? WALL_VERTICAL : WALL_HORIZONTAL;
