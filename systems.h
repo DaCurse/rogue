@@ -6,7 +6,9 @@
 void system_render_map(World *w);
 void system_render_logs(World *w);
 void system_render_status_bar(World *w);
-void system_player_input(World *w, int ch);
+void system_player_input(World *w);
+void system_ai(World *w);
+void system_tick_turn_delay(World *w);
 void system_movement(World *w);
 void system_combat(World *w);
 void system_exit_room(World *w);

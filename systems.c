@@ -115,10 +115,19 @@ void system_render_status_bar(World *w) {
     wrefresh(w->status_bar.win);
 }
 
-void system_player_input(World *w, int ch) {
+static inline bool can_act(World *w, Entity e) {
+    return !w->has[e].turn_delay || w->turn_delays[e].timer == 0;
+}
+
+static inline void consume_turn(World *w, Entity e) {
+    if (w->has[e].turn_delay)
+        w->turn_delays[e].timer = w->turn_delays[e].delay + 1;
+}
+
+void system_player_input(World *w) {
     int dx = 0, dy = 0;
 
-    switch (tolower(ch)) {
+    switch (tolower(w->player_data.input)) {
     case KEY_UP:
     case 'w':
         dy = -1;
@@ -139,7 +148,90 @@ void system_player_input(World *w, int ch) {
         return;
     }
 
-    world_add_move_intent(w, w->player, (MoveIntent){.dx = dx, .dy = dy});
+    if (can_act(w, w->player)) {
+        world_add_move_intent(w, w->player, (MoveIntent){.dx = dx, .dy = dy});
+        consume_turn(w, w->player);
+        w->player_data.turn_count++;
+    } else {
+        world_logf(w, "You are too tired to move!");
+    }
+}
+
+void system_ai(World *w) {
+    Position *player_pos = &w->positions[w->player];
+
+    FOR_EACH_ACTIVE(w, ai_list, e) {
+        AI *ai = &w->ais[e];
+
+        // Skip if unaware and can't act
+        if (!ai->aware && !can_act(w, e))
+            continue;
+
+        Position *pos = &w->positions[e];
+        int dx = player_pos->x - pos->x;
+        int dy = player_pos->y - pos->y;
+
+        int step_x = 0, step_y = 0;
+
+        if (!ai->aware) {
+            // Become aware if in same room as player and within radius
+            int ai_room = floor_find_room(w->floor, pos->x, pos->y);
+            int player_room =
+                floor_find_room(w->floor, player_pos->x, player_pos->y);
+            int dist_sq = dx * dx + dy * dy;
+
+            if (ai_room >= 0 && ai_room == player_room &&
+                dist_sq <= ai->detection_radius * ai->detection_radius) {
+                ai->aware = true;
+            } else {
+                // Wander randomly
+                int dirs[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+                int r = rand() % 4;
+                step_x = dirs[r][0];
+                step_y = dirs[r][1];
+
+                MoveIntent mi = {.dx = step_x, .dy = step_y};
+                world_add_move_intent(w, e, mi);
+                consume_turn(w, e); // Only wandering AI cares about turn delay
+                continue;
+            }
+        }
+
+        // Handle awareness decay
+        if (abs(dx) + abs(dy) > ai->detection_radius * 2) {
+            ai->aware = false;
+            continue;
+        }
+
+        // Lunge if adjacent
+        if ((abs(dx) + abs(dy) == 1) && w->has[w->player].combat_stats) {
+            CollisionEvent ce = {.target = w->player};
+            world_add_collision_event(w, e, ce);
+            world_logf(w, "%s lunges to intercept you!",
+                       w->combat_stats[e].name);
+            continue; // No movement needed
+        }
+
+        // Move 1 tile toward player (randomize axis if diagonal)
+        step_x = (dx == 0) ? 0 : (dx > 0 ? 1 : -1);
+        step_y = (dy == 0) ? 0 : (dy > 0 ? 1 : -1);
+        if (step_x && step_y) {
+            if (rand() % 2 == 0)
+                step_x = 0;
+            else
+                step_y = 0;
+        }
+
+        MoveIntent mi = {.dx = step_x, .dy = step_y};
+        world_add_move_intent(w, e, mi);
+    }
+}
+
+void system_tick_turn_delay(World *w) {
+    FOR_EACH_ACTIVE(w, turn_delay_list, e) {
+        if (w->turn_delays[e].timer > 0)
+            w->turn_delays[e].timer--;
+    }
 }
 
 static CollisionResult check_collision(World *w, Floor *f, Entity e1,

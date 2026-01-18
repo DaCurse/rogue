@@ -27,6 +27,7 @@ void create_player(World *world, char *name) {
     // Position will be set in setup_new_level
     world_add_renderable(world, player, player_render);
     world_add_combat_stats(world, player, combat_stats);
+    world_add_collider(world, player, (Collider){.blocks_movement = true});
 }
 
 void add_room_exit(World *world) {

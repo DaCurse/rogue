@@ -24,7 +24,7 @@ void floor_fill_void(Floor *f) {
     }
 }
 
-void carve_room(Floor *f, Room r) {
+static void carve_room(Floor *f, Room r) {
     assert(f->room_count < f->max_rooms);
 
     for (int y = r.y; y < r.y + r.h; y++) {
@@ -39,14 +39,14 @@ void carve_room(Floor *f, Room r) {
 
 // Helper to get 1D index from 2D coordinates, abstracting horizontal/vertical
 // orientation
-static int get_idx(Floor *f, int u, int v, bool horizontal) {
+static inline int get_idx(Floor *f, int u, int v, bool horizontal) {
     int x = horizontal ? u : v;
     int y = horizontal ? v : u;
     return x + f->width * y;
 }
 
 // Checks if a tile is safe to carve (not a specific bad wall type or a corner)
-static bool is_safe(Floor *f, int idx, WallType bad_wall) {
+static inline bool is_safe(Floor *f, int idx, WallType bad_wall) {
     if (idx < 0 || idx >= f->width * f->height)
         return false;
     return f->walls[idx] != bad_wall && f->walls[idx] != WALL_CORNER;
@@ -176,15 +176,15 @@ static void carve_safe_line(Floor *f, int u1, int u2, int v, bool horizontal) {
     }
 }
 
-void carve_horizontal_corridor(Floor *f, int x1, int x2, int y) {
+static inline void carve_horizontal_corridor(Floor *f, int x1, int x2, int y) {
     carve_safe_line(f, x1, x2, y, true);
 }
 
-void carve_vertical_corridor(Floor *f, int y1, int y2, int x) {
+static inline void carve_vertical_corridor(Floor *f, int y1, int y2, int x) {
     carve_safe_line(f, y1, y2, x, false);
 }
 
-bool rooms_intersect(Room a, Room b) {
+static bool rooms_intersect(Room a, Room b) {
     int gap = 2;
     return (a.x - gap <= b.x + b.w && a.x + a.w + gap >= b.x &&
             a.y - gap <= b.y + b.h && a.y + a.h + gap >= b.y);
@@ -221,7 +221,7 @@ void floor_generate_rooms(Floor *f, int room_min_size, int room_max_size) {
     }
 }
 
-int compare_rooms(const void *a, const void *b) {
+static int compare_rooms(const void *a, const void *b) {
     Room *r1 = (Room *)a;
     Room *r2 = (Room *)b;
     return r1->x - r2->x;

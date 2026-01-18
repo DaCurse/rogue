@@ -45,11 +45,13 @@ static void world_remove_entity_from_spatial_index(World *w, Entity e) {
 }
 
 void world_move_entity(World *w, Entity e, int new_x, int new_y) {
-    world_remove_entity_from_spatial_index(w, e);
+    // If the position is already occupied, do nothing
+    if (w->entity_at[new_y][new_x] != INVALID_ENTITY)
+        return;
 
     assert(in_bounds(w->floor, new_x, new_y));
-    assert(w->entity_at[new_y][new_x] == INVALID_ENTITY &&
-           "tile already occupied");
+
+    world_remove_entity_from_spatial_index(w, e);
 
     w->positions[e].x = new_x;
     w->positions[e].y = new_y;
@@ -105,6 +107,18 @@ void world_add_collider(World *w, Entity e, Collider c) {
     w->has[e].collider = true;
 }
 
+void world_add_ai(World *w, Entity e, AI ai) {
+    w->ais[e] = ai;
+    w->has[e].ai = true;
+    add_to_list(w->ai_list, &w->ai_list_count, e);
+}
+
+void world_add_turn_delay(World *w, Entity e, TurnDelay td) {
+    w->turn_delays[e] = td;
+    w->has[e].turn_delay = true;
+    add_to_list(w->turn_delay_list, &w->turn_delay_list_count, e);
+}
+
 void world_add_move_intent(World *w, Entity e, MoveIntent mi) {
     w->move_intents[e] = mi;
     w->has[e].move_intent = true;
@@ -127,6 +141,8 @@ void world_remove_entity(World *w, Entity e) {
     memset(&w->has[e], 0, sizeof(ComponentFlags));
     remove_from_list(w->render_list, &w->render_list_count, e);
     remove_from_list(w->combatants, &w->combatants_count, e);
+    remove_from_list(w->ai_list, &w->ai_list_count, e);
+    remove_from_list(w->turn_delay_list, &w->turn_delay_list_count, e);
 }
 
 int world_get_unoccupied_positions(World *w, Room *r, Position *out_arr,

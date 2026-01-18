@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
     world.status_bar.win = status_win;
 
     // Main game loop
-    while (true) {
+    for (;;) {
         system_render_map(&world);
         system_render_status_bar(&world);
         system_render_logs(&world);
@@ -111,13 +111,19 @@ int main(int argc, char **argv) {
         if (ch == 'q' || world.player_data.game_over) {
             break;
         }
+        world.player_data.input = ch;
 
-        world.player_data.turn_count++;
-        system_player_input(&world, ch);
-        system_movement(&world);
-        system_combat(&world);
-        system_exit_room(&world);
-        system_death(&world);
+        int turn_count_before = world.player_data.turn_count;
+        system_player_input(&world);
+
+        if (world.player_data.turn_count > turn_count_before) {
+            system_tick_turn_delay(&world);
+            system_ai(&world);
+            system_movement(&world);
+            system_combat(&world);
+            system_exit_room(&world);
+            system_death(&world);
+        }
     }
 
     endwin();

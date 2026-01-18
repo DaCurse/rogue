@@ -104,6 +104,8 @@ static void spawn_single_enemy_at(World *world, Position pos, int floor_depth) {
     world_add_renderable(world, enemy, enemy_render);
     world_add_combat_stats(world, enemy, combat_stats);
     world_add_collider(world, enemy, (Collider){.blocks_movement = true});
+    world_add_ai(world, enemy, tmpl->ai);
+    world_add_turn_delay(world, enemy, tmpl->turn_delay);
 }
 
 static int get_max_enemies_per_room(int floor_depth) {
