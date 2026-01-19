@@ -102,6 +102,11 @@ void world_add_combat_stats(World *w, Entity e, CombatStats cs) {
     }
 }
 
+void world_add_name(World *w, Entity e, Name n) {
+    w->names[e] = n;
+    w->has[e].name = true;
+}
+
 void world_add_collider(World *w, Entity e, Collider c) {
     w->colliders[e] = c;
     w->has[e].collider = true;

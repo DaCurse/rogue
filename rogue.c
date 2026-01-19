@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
     }
     srand(seed);
 
-    char player_name[PLAYER_NAME_MAX_LENGTH];
+    char player_name[NAME_MAX_LENGTH];
     printf("What is your name, adventurer? ");
     if (fgets(player_name, sizeof(player_name), stdin) != NULL) {
         filter_non_alpha(player_name);
@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
 
     if (world.player_data.game_over) {
         printf("\nGame Over!\n");
-        printf("%s reached Floor %d.\n", world.combat_stats[world.player].name,
+        printf("%s reached Floor %d.\n", world.names[world.player].name,
                world.player_data.floor);
     }
 

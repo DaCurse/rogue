@@ -9,6 +9,6 @@
 #define ROOM_MIN_SIZE (10)
 #define ROOM_MAX_SIZE (25)
 #define PLAYER_DEFAULT_NAME ("Player")
-#define PLAYER_NAME_MAX_LENGTH (16)
+#define NAME_MAX_LENGTH (16)
 
 #endif // CONFIG_H

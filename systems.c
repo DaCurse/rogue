@@ -109,7 +109,7 @@ void system_render_status_bar(World *w) {
     wbkgd(w->status_bar.win, COLOR_PAIR(COLOR_PAIR_STATUS));
     mvwprintw(w->status_bar.win, 0, 1,
               "%s, Level 1 adventurer | Floor: %d HP: %d/%d Seed: %u",
-              w->combat_stats[w->player].name, w->player_data.floor, cs->hp,
+              w->names[w->player].name, w->player_data.floor, cs->hp,
               cs->max_hp, w->seed);
 
     wrefresh(w->status_bar.win);
@@ -161,6 +161,7 @@ void system_ai(World *w) {
     Position *player_pos = &w->positions[w->player];
 
     FOR_EACH_ACTIVE(w, ai_list, e) {
+
         AI *ai = &w->ais[e];
 
         // Skip if unaware and can't act
@@ -208,8 +209,8 @@ void system_ai(World *w) {
         if ((distance == 1) && w->has[w->player].combat_stats) {
             CollisionEvent ce = {.target = w->player};
             world_add_collision_event(w, e, ce);
-            world_logf(w, "%s lunges to intercept you!",
-                       w->combat_stats[e].name);
+            assert(w->has[e].name);
+            world_logf(w, "%s lunges to intercept you!", w->names[e].name);
             continue; // No movement needed
         }
 
@@ -309,26 +310,28 @@ void system_movement(World *w) {
     w->movers_count = 0;
 }
 
-static void log_combat_event(World *w, const char *attacker,
-                             const char *defender, int damage_dealt,
-                             int damage_taken) {
+static void log_combat_event(World *w, Entity attacker, Entity defender,
+                             int damage_dealt, int damage_taken) {
     char attack_msg[LOG_MESSAGE_SIZE / 2];
+    const char *attacker_name = w->names[attacker].name;
+    const char *defender_name = w->names[defender].name;
     if (damage_dealt > 0) {
         snprintf(attack_msg, sizeof(attack_msg), "%s strikes %s for %d damage!",
-                 attacker, defender, damage_dealt);
+                 attacker_name, defender_name, damage_dealt);
     } else {
         snprintf(attack_msg, sizeof(attack_msg),
-                 "%s strikes %s but the attack is blocked!", attacker,
-                 defender);
+                 "%s strikes %s but the attack is blocked!", attacker_name,
+                 defender_name);
     }
 
     char counter_msg[LOG_MESSAGE_SIZE / 2];
     if (damage_taken > 0) {
         snprintf(counter_msg, sizeof(counter_msg),
-                 "%s counters, dealing %d damage.", defender, damage_taken);
+                 "%s counters, dealing %d damage.", defender_name,
+                 damage_taken);
     } else {
         snprintf(counter_msg, sizeof(counter_msg),
-                 "%s counters but deals no damage.", defender);
+                 "%s counters but deals no damage.", defender_name);
     }
 
     world_logf(w, "%s %s", attack_msg, counter_msg);
@@ -357,8 +360,8 @@ void system_combat(World *w) {
         defender_stats->hp = MAX(0, defender_stats->hp - damage_to_defender);
         attacker_stats->hp = MAX(0, attacker_stats->hp - damage_to_attacker);
 
-        log_combat_event(w, attacker_stats->name, defender_stats->name,
-                         damage_to_defender, damage_to_attacker);
+        log_combat_event(w, attacker, defender, damage_to_defender,
+                         damage_to_attacker);
 
         w->has[e].collision_event = false;
     }
@@ -385,7 +388,7 @@ void system_death(World *w) {
     FOR_EACH_ACTIVE_REVERSE(w, combatants, e) {
         CombatStats *cs = &w->combat_stats[e];
         if (cs->hp <= 0) {
-            world_logf(w, "%s dies.", cs->name);
+            world_logf(w, "%s dies.", w->names[e].name);
 
             if (e == w->player) {
                 w->player_data.game_over = true;

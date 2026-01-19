@@ -98,10 +98,12 @@ static void spawn_single_enemy_at(World *world, Position pos, int floor_depth) {
         .attack = final_atk,
         .defense = final_def,
     };
-    snprintf(combat_stats.name, sizeof(combat_stats.name), "%s", tmpl->name);
+    Name enemy_name;
+    snprintf(enemy_name.name, sizeof(enemy_name.name), "%s", tmpl->name);
 
     world_add_position(world, enemy, pos);
     world_add_renderable(world, enemy, enemy_render);
+    world_add_name(world, enemy, enemy_name);
     world_add_combat_stats(world, enemy, combat_stats);
     world_add_collider(world, enemy, (Collider){.blocks_movement = true});
     world_add_ai(world, enemy, tmpl->ai);

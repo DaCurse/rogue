@@ -37,12 +37,15 @@ typedef struct {
 } PlayerData;
 
 typedef struct {
-    char name[PLAYER_NAME_MAX_LENGTH];
     int hp;
     int max_hp;
     int attack;
     int defense;
 } CombatStats;
+
+typedef struct {
+    char name[NAME_MAX_LENGTH];
+} Name;
 
 typedef struct {
     bool blocks_movement;
@@ -58,7 +61,11 @@ typedef struct {
     int timer;
 } TurnDelay;
 
-typedef enum { COLLISION_NONE, COLLISION_MAP, COLLISION_ENTITY } CollisionType;
+typedef enum {
+    COLLISION_NONE,
+    COLLISION_MAP,
+    COLLISION_ENTITY,
+} CollisionType;
 
 typedef struct {
     CollisionType type;
@@ -82,6 +89,7 @@ typedef struct {
 typedef struct {
     bool position        : 1;
     bool renderable      : 1;
+    bool name            : 1;
     bool combat_stats    : 1;
     bool collider        : 1;
     bool ai              : 1;
@@ -109,6 +117,7 @@ typedef struct {
 
     Position positions[MAX_ENTITIES];
     Renderable renderables[MAX_ENTITIES];
+    Name names[MAX_ENTITIES];
     CombatStats combat_stats[MAX_ENTITIES];
     Collider colliders[MAX_ENTITIES];
     AI ais[MAX_ENTITIES];
@@ -145,6 +154,7 @@ Entity world_create_entity(World *w);
 void world_move_entity(World *w, Entity e, int new_x, int new_y);
 void world_add_position(World *w, Entity e, Position pos);
 void world_add_renderable(World *w, Entity e, Renderable r);
+void world_add_name(World *w, Entity e, Name n);
 void world_add_combat_stats(World *w, Entity e, CombatStats cs);
 void world_add_collider(World *w, Entity e, Collider c);
 void world_add_ai(World *w, Entity e, AI ai);

@@ -22,10 +22,12 @@ void create_player(World *world, char *name) {
         .attack = 10,
         .defense = 0,
     };
-    snprintf(combat_stats.name, sizeof(combat_stats.name), "%s", name);
+    Name player_name;
+    snprintf(player_name.name, sizeof(player_name.name), "%s", name);
 
     // Position will be set in setup_new_level
     world_add_renderable(world, player, player_render);
+    world_add_name(world, player, player_name);
     world_add_combat_stats(world, player, combat_stats);
     world_add_collider(world, player, (Collider){.blocks_movement = true});
 }
