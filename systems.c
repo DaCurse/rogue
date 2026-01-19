@@ -5,8 +5,11 @@
 #include <stdio.h>
 
 #include "color.h"
+#include "consumable.h"
 #include "game.h"
+#include "item.h"
 #include "utils.h"
+#include "world.h"
 
 #define MESSAGE_BOREDOM_THRESHOLD (15)
 
@@ -338,7 +341,7 @@ static void log_combat_event(World *w, Entity attacker, Entity defender,
 }
 
 void system_combat(World *w) {
-    FOR_EACH_ACTIVE(w, collisions, e) {
+    FOR_EACH_ACTIVE_REVERSE(w, collisions, e) {
         CollisionEvent *ce = &w->collision_events[e];
         Entity attacker = e;
         Entity defender = ce->target;
@@ -364,10 +367,36 @@ void system_combat(World *w) {
                          damage_to_attacker);
 
         w->has[e].collision_event = false;
+        entity_list_remove_index(w->collisions, &w->collisions_count,
+                                 ACTIVE_INDEX(collisions));
     }
+}
 
-    // Clear hot collisions list
-    w->collisions_count = 0;
+void system_pickup_item(World *w) {
+    FOR_EACH_ACTIVE_REVERSE(w, collisions, e) {
+        CollisionEvent *ce = &w->collision_events[e];
+        Entity picker = e;
+        Entity item = ce->target;
+
+        // Check if picker is the player and target is an item
+        if (picker != w->player)
+            continue;
+        if (!w->has[item].equippable && !w->has[item].consumable)
+            continue;
+
+        // Try to add item to inventory
+        if (world_add_item_to_inventory(w, item)) {
+            world_logf(w, "You pick up the %s.", w->names[item].name);
+            world_remove_position(w, item);
+        } else {
+            world_logf(w, "Your inventory is full! Cannot pick up %s.",
+                       w->names[item].name);
+        }
+
+        w->has[e].collision_event = false;
+        entity_list_remove_index(w->collisions, &w->collisions_count,
+                                 ACTIVE_INDEX(collisions));
+    }
 }
 
 void system_exit_room(World *w) {

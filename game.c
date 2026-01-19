@@ -5,6 +5,7 @@
 
 #include "config.h"
 #include "enemy.h"
+#include "item.h"
 #include "utils.h"
 
 void create_player(World *world, char *name) {
@@ -30,6 +31,8 @@ void create_player(World *world, char *name) {
     world_add_name(world, player, player_name);
     world_add_combat_stats(world, player, combat_stats);
     world_add_collider(world, player, (Collider){.blocks_movement = true});
+    world_add_equipment(world, player, (Equipment){0});
+    reset_equipment(&world->equipment[player]);
 }
 
 void add_room_exit(World *world) {
@@ -49,6 +52,33 @@ void add_room_exit(World *world) {
                            (Collider){.blocks_movement = true});
         world->room_exit = exit_entity;
         return;
+    }
+}
+
+static void create_health_potion(World *world) {
+    Entity potion = world_create_entity(world);
+    Room *room = floor_random_room(world->floor);
+    Position potion_pos;
+    if (world_get_random_unoccupied_in_room(world, room, &potion_pos)) {
+        Renderable potion_render = {.glyph = '!',
+                                    .color_pair = COLOR_PAIR_FLOOR};
+        Name potion_name;
+        snprintf(potion_name.name, sizeof(potion_name.name), "Health Potion");
+        Consumable potion_consumable = {
+            .type = CONSUMABLE_HEALING_POTION,
+            .effect.healing_potion.heal_amount = 20,
+        };
+        Equippable potion_equippable = {
+            .type = EQUIPMENT_CONSUMABLE,
+            .slot = SLOT_OFF_HAND,
+        };
+
+        world_add_position(world, potion, potion_pos);
+        world_add_renderable(world, potion, potion_render);
+        world_add_name(world, potion, potion_name);
+        world_add_consumable(world, potion, potion_consumable);
+        world_add_equippable(world, potion, potion_equippable);
+        world_add_collider(world, potion, (Collider){.blocks_movement = true});
     }
 }
 
@@ -107,5 +137,7 @@ void setup_new_level(World *w) {
 
     // Add new entities
     spawn_enemies_for_level(w);
+    // TODO: For testing purposes, randomize later
+    create_health_potion(w);
     add_room_exit(w);
 }

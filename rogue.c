@@ -7,16 +7,20 @@
 
 #include "color.h"
 #include "config.h"
+#include "consumable.h"
 #include "floor.h"
 #include "game.h"
+#include "item.h"
 #include "systems.h"
 #include "utils.h"
 #include "world.h"
 
 #include "color.c"
+#include "consumable.c"
 #include "enemy.c"
 #include "floor.c"
 #include "game.c"
+#include "item.c"
 #include "systems.c"
 #include "utils.c"
 #include "world.c"
@@ -118,6 +122,7 @@ int main(int argc, char **argv) {
             system_ai(&world);
             system_movement(&world);
             system_combat(&world);
+            system_pickup_item(&world);
             system_exit_room(&world);
             system_death(&world);
         }

@@ -11,6 +11,7 @@ void system_ai(World *w);
 void system_tick_turn_delay(World *w);
 void system_movement(World *w);
 void system_combat(World *w);
+void system_pickup_item(World *w);
 void system_exit_room(World *w);
 void system_death(World *w);
 

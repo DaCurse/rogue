@@ -84,6 +84,14 @@ void world_add_position(World *w, Entity e, Position pos) {
     }
 }
 
+void world_remove_position(World *w, Entity e) {
+    world_remove_entity_from_spatial_index(w, e);
+    w->has[e].position = false;
+    remove_from_list(w->render_list, &w->render_list_count, e);
+    remove_from_list(w->combatants, &w->combatants_count, e);
+    remove_from_list(w->movers, &w->movers_count, e);
+}
+
 void world_add_renderable(World *w, Entity e, Renderable r) {
     w->renderables[e] = r;
     w->has[e].renderable = true;
@@ -206,4 +214,11 @@ void world_logf(World *w, const char *format, ...) {
     }
 
     w->log.turn_timestamp = w->player_data.turn_count;
+}
+
+void entity_list_remove_index(Entity *list, uint16_t *count, size_t index) {
+    if (index >= *count)
+        return;
+
+    list[index] = list[--(*count)];
 }

@@ -8,13 +8,12 @@
 
 #include "color.h"
 #include "config.h"
+#include "ecs_base.h"
 #include "floor.h"
+#include "item.h"
 
 #define MAX_ENTITIES (128)
-#define INVALID_ENTITY ((Entity)(-1))
 #define LOG_MESSAGE_SIZE (MAP_W)
-
-typedef int16_t Entity;
 
 typedef struct {
     WINDOW *win;
@@ -97,9 +96,12 @@ typedef struct {
     bool turn_delay      : 1;
     bool move_intent     : 1;
     bool collision_event : 1;
+    bool equipment       : 1;
+    bool consumable      : 1;
+    bool equippable      : 1;
 } ComponentFlags;
 
-typedef struct {
+typedef struct World {
     uint32_t seed;
     RenderContext map;
     RenderContext log_window;
@@ -125,6 +127,11 @@ typedef struct {
     TurnDelay turn_delays[MAX_ENTITIES];
     MoveIntent move_intents[MAX_ENTITIES];
     CollisionEvent collision_events[MAX_ENTITIES];
+
+    Inventory player_inventory;
+    Equipment equipment[MAX_ENTITIES];
+    Consumable consumables[MAX_ENTITIES];
+    Equippable equippables[MAX_ENTITIES];
 
     ComponentFlags has[MAX_ENTITIES];
 
@@ -154,6 +161,7 @@ typedef struct {
 Entity world_create_entity(World *w);
 void world_move_entity(World *w, Entity e, int new_x, int new_y);
 void world_add_position(World *w, Entity e, Position pos);
+void world_remove_position(World *w, Entity e);
 void world_add_renderable(World *w, Entity e, Renderable r);
 void world_add_name(World *w, Entity e, Name n);
 void world_add_combat_stats(World *w, Entity e, CombatStats cs);
@@ -167,6 +175,7 @@ int world_get_unoccupied_positions(World *w, Room *r, Position *out_arr,
                                    int max_len);
 bool world_get_random_unoccupied_in_room(World *w, Room *r, Position *out_pos);
 void world_logf(World *w, const char *format, ...);
+void entity_list_remove_index(Entity *list, uint16_t *count, size_t index);
 
 // Debug assertion macros for iteration macros below
 #define CHECK_COMPONENT_render_list(w, e)                                      \
@@ -182,37 +191,41 @@ void world_logf(World *w, const char *format, ...);
 // Requires: world->LIST[MAX_ENTITIES], world->LIST_count
 // Note: 'var' is declared inside the macro
 #define FOR_EACH_ACTIVE(world, list, var)                                      \
-    for (int _i_##list = 0, var; _i_##list < (world)->list##_count &&          \
-                                 ((var) = (world)->list[_i_##list],            \
-                                 CHECK_COMPONENT_##list(world, var), 1);       \
+    Entity var;                                                                \
+    for (size_t _i_##list = 0; _i_##list < (world)->list##_count &&            \
+                               ((var) = (world)->list[_i_##list],              \
+                               CHECK_COMPONENT_##list(world, var), 1);         \
          ++_i_##list)
 
 // Iterates over all active entities in a hot list in reverse order
 // Requires: world->LIST[MAX_ENTITIES], world->LIST_count
 // Note: 'var' is declared inside the macro
 #define FOR_EACH_ACTIVE_REVERSE(world, list, var)                              \
-    for (int _i_##list = (world)->list##_count - 1, var;                       \
-         _i_##list >= 0 && ((var) = (world)->list[_i_##list],                  \
-                           CHECK_COMPONENT_##list(world, var), 1);             \
-         --_i_##list)
+    Entity var;                                                                \
+    for (size_t _i_##list = (world)->list##_count; _i_##list-- > 0;)           \
+        if (((var) = (world)->list[_i_##list],                                 \
+             CHECK_COMPONENT_##list(world, var), 1))
+
+// Helper macro to neatly get the current hot list index when inside above loops
+#define ACTIVE_INDEX(list) _i_##list
 
 // Iterates over all valid entities (0 to count-1).
 #define FOR_EACH_ENTITY(world, var)                                            \
-    for (int var = 0; var < (world)->count; ++var)
+    for (Entity var = 0; var < (world)->count; ++var)
 
 // Iterates over all entities with a single component predicate.
 #define FOR_EACH_ENTITY_IF1(world, var, comp1)                                 \
-    for (int var = 0; var < (world)->count; ++var)                             \
+    for (Entity var = 0; var < (world)->count; ++var)                          \
         if ((world)->has[var].comp1)
 
 // Iterates over all entities with two component predicates.
 #define FOR_EACH_ENTITY_IF2(world, var, comp1, comp2)                          \
-    for (int var = 0; var < (world)->count; ++var)                             \
+    for (Entity var = 0; var < (world)->count; ++var)                          \
         if ((world)->has[var].comp1 && (world)->has[var].comp2)
 
 // Iterates over all entities with three component predicates.
 #define FOR_EACH_ENTITY_IF3(world, var, comp1, comp2, comp3)                   \
-    for (int var = 0; var < (world)->count; ++var)                             \
+    for (Entity var = 0; var < (world)->count; ++var)                          \
         if ((world)->has[var].comp1 && (world)->has[var].comp2 &&              \
             (world)->has[var].comp3)
 
