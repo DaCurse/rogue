@@ -6,11 +6,13 @@
 #include "config.h"
 #include "utils.h"
 
-bool in_bounds(Floor *f, int x, int y) {
-    return x >= 0 && y >= 0 && x < f->width && y < f->height;
+bool in_bounds(const Floor *f, int x, int y) {
+    assert(f->width >= 0 && f->height >= 0);
+    return (unsigned)x < (unsigned)f->width &&
+           (unsigned)y < (unsigned)f->height;
 }
 
-Tile tile_at(Floor *f, int x, int y) {
+Tile tile_at(const Floor *f, int x, int y) {
     if (!in_bounds(f, x, y))
         return TILE_WALL;
 

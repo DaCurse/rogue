@@ -41,8 +41,8 @@ typedef struct {
     Room *rooms;
 } Floor;
 
-inline bool in_bounds(Floor *f, int x, int y);
-inline Tile tile_at(Floor *f, int x, int y);
+inline bool in_bounds(const Floor *f, int x, int y);
+inline Tile tile_at(const Floor *f, int x, int y);
 void floor_fill_void(Floor *f);
 void floor_generate_rooms(Floor *f, int room_min_size, int room_max_size);
 void floor_connect_rooms(Floor *f);
