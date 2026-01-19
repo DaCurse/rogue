@@ -12,7 +12,6 @@
 #define MAX_ENTITIES (128)
 #define INVALID_ENTITY ((Entity)(-1))
 #define LOG_MESSAGE_SIZE (MAP_W)
-#define PLAYER_NAME_MAX_LENGTH (16)
 
 typedef int Entity;
 

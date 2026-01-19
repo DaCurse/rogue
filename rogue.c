@@ -53,8 +53,8 @@ int main(int argc, char **argv) {
     }
 
     // Initialize floor
-    TileWithFog map_data[MAP_H * MAP_W];
-    WallType walls[MAP_H * MAP_W];
+    TileWithFog map_data[MAP_H * MAP_W] = {0};
+    WallType walls[MAP_H * MAP_W] = {0};
     Room rooms[MAX_ROOMS];
     Floor floor = {.width = MAP_W,
                    .height = MAP_H,
@@ -65,9 +65,6 @@ int main(int argc, char **argv) {
                    .room_count = 0,
                    .max_rooms = MAX_ROOMS,
                    .rooms = rooms};
-
-    // Initial void fill only, rest handled by setup_new_level
-    floor_fill_void(&floor);
 
     // Initialize ncurses
     initscr();

@@ -170,6 +170,8 @@ void system_ai(World *w) {
         Position *pos = &w->positions[e];
         int dx = player_pos->x - pos->x;
         int dy = player_pos->y - pos->y;
+        // Manhattan distance
+        int distance = abs(dx) + abs(dy);
 
         int step_x = 0, step_y = 0;
 
@@ -178,10 +180,9 @@ void system_ai(World *w) {
             int ai_room = floor_find_room(w->floor, pos->x, pos->y);
             int player_room =
                 floor_find_room(w->floor, player_pos->x, player_pos->y);
-            int dist_sq = dx * dx + dy * dy;
 
             if (ai_room >= 0 && ai_room == player_room &&
-                dist_sq <= ai->detection_radius * ai->detection_radius) {
+                distance <= ai->detection_radius) {
                 ai->aware = true;
             } else {
                 // Wander randomly
@@ -198,13 +199,13 @@ void system_ai(World *w) {
         }
 
         // Handle awareness decay
-        if (abs(dx) + abs(dy) > ai->detection_radius * 2) {
+        if (distance > ai->detection_radius * 2) {
             ai->aware = false;
             continue;
         }
 
         // Lunge if adjacent
-        if ((abs(dx) + abs(dy) == 1) && w->has[w->player].combat_stats) {
+        if ((distance == 1) && w->has[w->player].combat_stats) {
             CollisionEvent ce = {.target = w->player};
             world_add_collision_event(w, e, ce);
             world_logf(w, "%s lunges to intercept you!",
@@ -216,10 +217,11 @@ void system_ai(World *w) {
         step_x = (dx == 0) ? 0 : (dx > 0 ? 1 : -1);
         step_y = (dy == 0) ? 0 : (dy > 0 ? 1 : -1);
         if (step_x && step_y) {
-            if (rand() % 2 == 0)
+            if (chance(0.5f)) {
                 step_x = 0;
-            else
+            } else {
                 step_y = 0;
+            }
         }
 
         MoveIntent mi = {.dx = step_x, .dy = step_y};

@@ -6,13 +6,18 @@
 // Terminal characters are ~2x taller than wide
 #define CELL_ASPECT_RATIO 2
 
-typedef enum { TILE_VOID, TILE_WALL, TILE_FLOOR, TILE_ROAD } Tile;
+typedef enum {
+    TILE_VOID,
+    TILE_WALL,
+    TILE_FLOOR,
+    TILE_ROAD,
+} Tile;
 
 typedef enum {
     WALL_UNSET,
     WALL_HORIZONTAL,
     WALL_VERTICAL,
-    WALL_CORNER
+    WALL_CORNER,
 } WallType;
 
 typedef struct {
@@ -42,7 +47,7 @@ void floor_fill_void(Floor *f);
 void floor_generate_rooms(Floor *f, int room_min_size, int room_max_size);
 void floor_connect_rooms(Floor *f);
 void floor_build_walls(Floor *f);
-void floor_reveal_area(Floor *f, int x, int y, int radius);
+inline void floor_reveal_area(Floor *f, int x, int y, int radius);
 void floor_reveal_filtered(Floor *f, int x, int y, int radius,
                            unsigned int mask);
 int floor_find_room(Floor *f, int x, int y);
