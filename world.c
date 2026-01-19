@@ -8,16 +8,16 @@
 #include "color.h"
 #include "utils.h"
 
-static void add_to_list(Entity *list, int *count, Entity e) {
-    for (int i = 0; i < *count; i++) {
+static void add_to_list(Entity *list, uint16_t *count, Entity e) {
+    for (uint16_t i = 0; i < *count; i++) {
         if (list[i] == e)
             return;
     }
     list[(*count)++] = e;
 }
 
-static void remove_from_list(Entity *list, int *count, Entity e) {
-    for (int i = 0; i < *count; i++) {
+static void remove_from_list(Entity *list, uint16_t *count, Entity e) {
+    for (uint16_t i = 0; i < *count; i++) {
         if (list[i] == e) {
             list[i] = list[--(*count)];
             return;

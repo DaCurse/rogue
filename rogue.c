@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
         }
         world.player_data.input = ch;
 
-        int turn_count_before = world.player_data.turn_count;
+        uint32_t turn_count_before = world.player_data.turn_count;
         system_player_input(&world);
 
         if (world.player_data.turn_count > turn_count_before) {

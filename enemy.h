@@ -9,18 +9,18 @@ typedef struct {
     ColorPair color;
 
     // Base stats
-    int base_hp;
-    int base_attack;
-    int base_defense;
+    int16_t base_hp;
+    int16_t base_attack;
+    int16_t base_defense;
 
     // Scaling
     float scale_factor;
 
     // Spawning logic
-    int threat_cost;
-    int min_depth;
-    int base_weight;
-    int depth_weight_mod;
+    uint8_t threat_cost;
+    uint8_t min_depth;
+    int16_t base_weight;
+    int16_t depth_weight_mod;
 
     // AI configuration
     AI ai;

@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <ncurses.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "color.h"
 #include "config.h"
@@ -13,14 +14,14 @@
 #define INVALID_ENTITY ((Entity)(-1))
 #define LOG_MESSAGE_SIZE (MAP_W)
 
-typedef int Entity;
+typedef int16_t Entity;
 
 typedef struct {
     WINDOW *win;
 } RenderContext;
 
 typedef struct {
-    int x, y;
+    int16_t x, y;
 } Position;
 
 typedef struct {
@@ -29,18 +30,18 @@ typedef struct {
 } Renderable;
 
 typedef struct {
-    int input;
-    int room_id;
-    int floor;
+    int32_t input;
+    int16_t room_id;
+    int16_t floor;
     bool game_over;
-    int turn_count;
+    uint32_t turn_count;
 } PlayerData;
 
 typedef struct {
-    int hp;
-    int max_hp;
-    int attack;
-    int defense;
+    int16_t hp;
+    int16_t max_hp;
+    int16_t attack;
+    int16_t defense;
 } CombatStats;
 
 typedef struct {
@@ -53,12 +54,12 @@ typedef struct {
 
 typedef struct {
     bool aware;
-    int detection_radius;
+    uint8_t detection_radius;
 } AI;
 
 typedef struct {
-    int delay;
-    int timer;
+    uint8_t delay;
+    uint8_t timer;
 } TurnDelay;
 
 typedef enum {
@@ -73,7 +74,7 @@ typedef struct {
 } CollisionResult;
 
 typedef struct {
-    int dx, dy;
+    int16_t dx, dy;
 } MoveIntent;
 
 typedef struct {
@@ -82,8 +83,8 @@ typedef struct {
 
 typedef struct {
     char messages[LOG_H][LOG_MESSAGE_SIZE];
-    int repeat_counts[LOG_H];
-    int turn_timestamp;
+    int8_t repeat_counts[LOG_H];
+    uint32_t turn_timestamp;
 } MessageLog;
 
 typedef struct {
@@ -99,12 +100,12 @@ typedef struct {
 } ComponentFlags;
 
 typedef struct {
-    unsigned int seed;
+    uint32_t seed;
     RenderContext map;
     RenderContext log_window;
     RenderContext status_bar;
 
-    int count;
+    uint16_t count;
     Entity entities[MAX_ENTITIES];
 
     Floor *floor;
@@ -129,22 +130,22 @@ typedef struct {
 
     // Hot lists to optimize system iterations
     Entity movers[MAX_ENTITIES];
-    int movers_count;
+    uint16_t movers_count;
 
     Entity render_list[MAX_ENTITIES];
-    int render_list_count;
+    uint16_t render_list_count;
 
     Entity combatants[MAX_ENTITIES];
-    int combatants_count;
+    uint16_t combatants_count;
 
     Entity collisions[MAX_ENTITIES];
-    int collisions_count;
+    uint16_t collisions_count;
 
     Entity ai_list[MAX_ENTITIES];
-    int ai_list_count;
+    uint16_t ai_list_count;
 
     Entity turn_delay_list[MAX_ENTITIES];
-    int turn_delay_list_count;
+    uint16_t turn_delay_list_count;
 
     // Spatial index for quick occupancy checks
     Entity entity_at[MAP_H][MAP_W];
