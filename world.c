@@ -8,23 +8,6 @@
 #include "color.h"
 #include "utils.h"
 
-static void add_to_list(Entity *list, uint16_t *count, Entity e) {
-    for (uint16_t i = 0; i < *count; i++) {
-        if (list[i] == e)
-            return;
-    }
-    list[(*count)++] = e;
-}
-
-static void remove_from_list(Entity *list, uint16_t *count, Entity e) {
-    for (uint16_t i = 0; i < *count; i++) {
-        if (list[i] == e) {
-            list[i] = list[--(*count)];
-            return;
-        }
-    }
-}
-
 Entity world_create_entity(World *w) {
     Entity e = w->count++;
     w->entities[e] = e;
@@ -74,22 +57,22 @@ void world_add_position(World *w, Entity e, Position pos) {
     w->entity_at[pos.y][pos.x] = e;
 
     if (w->has[e].renderable) {
-        add_to_list(w->render_list, &w->render_list_count, e);
+        hot_list_add_entity(w->render_list, &w->render_list_count, e);
     }
     if (w->has[e].combat_stats) {
-        add_to_list(w->combatants, &w->combatants_count, e);
+        hot_list_add_entity(w->combatants, &w->combatants_count, e);
     }
     if (w->has[e].move_intent) {
-        add_to_list(w->movers, &w->movers_count, e);
+        hot_list_add_entity(w->movers, &w->movers_count, e);
     }
 }
 
 void world_remove_position(World *w, Entity e) {
     world_remove_entity_from_spatial_index(w, e);
     w->has[e].position = false;
-    remove_from_list(w->render_list, &w->render_list_count, e);
-    remove_from_list(w->combatants, &w->combatants_count, e);
-    remove_from_list(w->movers, &w->movers_count, e);
+    hot_list_remove_entity(w->render_list, &w->render_list_count, e);
+    hot_list_remove_entity(w->combatants, &w->combatants_count, e);
+    hot_list_remove_entity(w->movers, &w->movers_count, e);
 }
 
 void world_add_renderable(World *w, Entity e, Renderable r) {
@@ -97,7 +80,7 @@ void world_add_renderable(World *w, Entity e, Renderable r) {
     w->has[e].renderable = true;
 
     if (w->has[e].position) {
-        add_to_list(w->render_list, &w->render_list_count, e);
+        hot_list_add_entity(w->render_list, &w->render_list_count, e);
     }
 }
 
@@ -106,7 +89,7 @@ void world_add_combat_stats(World *w, Entity e, CombatStats cs) {
     w->has[e].combat_stats = true;
 
     if (w->has[e].position) {
-        add_to_list(w->combatants, &w->combatants_count, e);
+        hot_list_add_entity(w->combatants, &w->combatants_count, e);
     }
 }
 
@@ -123,13 +106,13 @@ void world_add_collider(World *w, Entity e, Collider c) {
 void world_add_ai(World *w, Entity e, AI ai) {
     w->ais[e] = ai;
     w->has[e].ai = true;
-    add_to_list(w->ai_list, &w->ai_list_count, e);
+    hot_list_add_entity(w->ai_list, &w->ai_list_count, e);
 }
 
 void world_add_turn_delay(World *w, Entity e, TurnDelay td) {
     w->turn_delays[e] = td;
     w->has[e].turn_delay = true;
-    add_to_list(w->turn_delay_list, &w->turn_delay_list_count, e);
+    hot_list_add_entity(w->turn_delay_list, &w->turn_delay_list_count, e);
 }
 
 void world_add_move_intent(World *w, Entity e, MoveIntent mi) {
@@ -137,14 +120,14 @@ void world_add_move_intent(World *w, Entity e, MoveIntent mi) {
     w->has[e].move_intent = true;
 
     if (w->has[e].position) {
-        add_to_list(w->movers, &w->movers_count, e);
+        hot_list_add_entity(w->movers, &w->movers_count, e);
     }
 }
 
 void world_add_collision_event(World *w, Entity e, CollisionEvent ce) {
     w->collision_events[e] = ce;
     w->has[e].collision_event = true;
-    add_to_list(w->collisions, &w->collisions_count, e);
+    hot_list_add_entity(w->collisions, &w->collisions_count, e);
 }
 
 void world_remove_entity(World *w, Entity e) {
@@ -152,10 +135,11 @@ void world_remove_entity(World *w, Entity e) {
     world_remove_entity_from_spatial_index(w, e);
     // Now we can clear all components
     memset(&w->has[e], 0, sizeof(ComponentFlags));
-    remove_from_list(w->render_list, &w->render_list_count, e);
-    remove_from_list(w->combatants, &w->combatants_count, e);
-    remove_from_list(w->ai_list, &w->ai_list_count, e);
-    remove_from_list(w->turn_delay_list, &w->turn_delay_list_count, e);
+    hot_list_remove_entity(w->render_list, &w->render_list_count, e);
+    hot_list_remove_entity(w->combatants, &w->combatants_count, e);
+    hot_list_remove_entity(w->ai_list, &w->ai_list_count, e);
+    hot_list_remove_entity(w->turn_delay_list, &w->turn_delay_list_count, e);
+    hot_list_remove_entity(w->collisions, &w->collisions_count, e);
 }
 
 int world_get_unoccupied_positions(World *w, Room *r, Position *out_arr,
@@ -216,7 +200,24 @@ void world_logf(World *w, const char *format, ...) {
     w->log.turn_timestamp = w->player_data.turn_count;
 }
 
-void entity_list_remove_index(Entity *list, uint16_t *count, size_t index) {
+void hot_list_add_entity(Entity *list, uint16_t *count, Entity e) {
+    for (uint16_t i = 0; i < *count; i++) {
+        if (list[i] == e)
+            return;
+    }
+    list[(*count)++] = e;
+}
+
+void hot_list_remove_entity(Entity *list, uint16_t *count, Entity e) {
+    for (uint16_t i = 0; i < *count; i++) {
+        if (list[i] == e) {
+            list[i] = list[--(*count)];
+            return;
+        }
+    }
+}
+
+void hot_list_remove_index(Entity *list, uint16_t *count, size_t index) {
     if (index >= *count)
         return;
 

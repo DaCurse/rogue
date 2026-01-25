@@ -175,7 +175,9 @@ int world_get_unoccupied_positions(World *w, Room *r, Position *out_arr,
                                    int max_len);
 bool world_get_random_unoccupied_in_room(World *w, Room *r, Position *out_pos);
 void world_logf(World *w, const char *format, ...);
-void entity_list_remove_index(Entity *list, uint16_t *count, size_t index);
+void hot_list_remove_entity(Entity *list, uint16_t *count, Entity e);
+void hot_list_remove_index(Entity *list, uint16_t *count, size_t index);
+void hot_list_add_entity(Entity *list, uint16_t *count, Entity e);
 
 // Debug assertion macros for iteration macros below
 #define CHECK_COMPONENT_render_list(w, e)                                      \

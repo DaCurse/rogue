@@ -367,8 +367,8 @@ void system_combat(World *w) {
                          damage_to_attacker);
 
         w->has[e].collision_event = false;
-        entity_list_remove_index(w->collisions, &w->collisions_count,
-                                 ACTIVE_INDEX(collisions));
+        hot_list_remove_index(w->collisions, &w->collisions_count,
+                              ACTIVE_INDEX(collisions));
     }
 }
 
@@ -394,8 +394,8 @@ void system_pickup_item(World *w) {
         }
 
         w->has[e].collision_event = false;
-        entity_list_remove_index(w->collisions, &w->collisions_count,
-                                 ACTIVE_INDEX(collisions));
+        hot_list_remove_index(w->collisions, &w->collisions_count,
+                              ACTIVE_INDEX(collisions));
     }
 }
 
@@ -407,6 +407,7 @@ void system_exit_room(World *w) {
     if (ce->target == w->room_exit) {
         // Player collided with room exit
         w->has[w->player].collision_event = false;
+        hot_list_remove_entity(w->collisions, &w->collisions_count, w->player);
         world_logf(w, "You descend deeper into the dungeon.");
 
         setup_new_level(w);
