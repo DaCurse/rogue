@@ -1,6 +1,7 @@
 #include "consumable.h"
 
 #include "utils.h"
+#include "world.h"
 
 static void use_healing_potion(World *w, Entity user, Entity item) {
     if (!w->has[user].combat_stats)
