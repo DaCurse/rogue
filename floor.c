@@ -6,19 +6,6 @@
 #include "config.h"
 #include "utils.h"
 
-bool in_bounds(const Floor *f, int x, int y) {
-    assert(f->width >= 0 && f->height >= 0);
-    return (unsigned)x < (unsigned)f->width &&
-           (unsigned)y < (unsigned)f->height;
-}
-
-Tile tile_at(const Floor *f, int x, int y) {
-    if (!in_bounds(f, x, y))
-        return TILE_WALL;
-
-    return f->data[x + f->width * y].tile;
-}
-
 void floor_fill_void(Floor *f) {
     for (int i = 0; i < f->width * f->height; i++) {
         f->data[i].tile = TILE_VOID;
@@ -285,10 +272,6 @@ void floor_build_walls(Floor *f) {
             }
         }
     }
-}
-
-void floor_reveal_area(Floor *f, int x, int y, int radius) {
-    floor_reveal_filtered(f, x, y, radius, ~0u);
 }
 
 void floor_reveal_filtered(Floor *f, int x, int y, int radius,

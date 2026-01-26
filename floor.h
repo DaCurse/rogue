@@ -1,6 +1,7 @@
 #ifndef FLOOR_H
 #define FLOOR_H
 
+#include <assert.h>
 #include <stdbool.h>
 
 // Terminal characters are ~2x taller than wide
@@ -41,15 +42,31 @@ typedef struct {
     Room *rooms;
 } Floor;
 
-inline bool in_bounds(const Floor *f, int x, int y);
-inline Tile tile_at(const Floor *f, int x, int y);
+static inline bool in_bounds(const Floor *f, int x, int y) {
+    assert(f->width >= 0 && f->height >= 0);
+    return (unsigned)x < (unsigned)f->width &&
+           (unsigned)y < (unsigned)f->height;
+}
+
+static inline Tile tile_at(const Floor *f, int x, int y) {
+    if (!in_bounds(f, x, y))
+        return TILE_WALL;
+
+    return f->data[x + f->width * y].tile;
+}
+
 void floor_fill_void(Floor *f);
 void floor_generate_rooms(Floor *f, int room_min_size, int room_max_size);
 void floor_connect_rooms(Floor *f);
 void floor_build_walls(Floor *f);
-inline void floor_reveal_area(Floor *f, int x, int y, int radius);
+
 void floor_reveal_filtered(Floor *f, int x, int y, int radius,
                            unsigned int mask);
+
+static inline void floor_reveal_area(Floor *f, int x, int y, int radius) {
+    floor_reveal_filtered(f, x, y, radius, ~0u);
+}
+
 int floor_find_room(Floor *f, int x, int y);
 void floor_reveal_room(Floor *f, int room_index);
 Room *floor_random_room(Floor *f);

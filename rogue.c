@@ -16,16 +16,6 @@
 #include "utils.h"
 #include "world.h"
 
-#include "color.c"
-#include "consumable.c"
-#include "enemy.c"
-#include "floor.c"
-#include "game.c"
-#include "item.c"
-#include "systems.c"
-#include "utils.c"
-#include "world.c"
-
 WINDOW *create_window(int h, int w, int y, int x) {
     assert(h > 0 && w > 0);
 
@@ -39,20 +29,20 @@ WINDOW *create_window(int h, int w, int y, int x) {
     return win;
 }
 
-TileWithFog map_data[MAP_H * MAP_W] = {0};
-WallType walls[MAP_H * MAP_W] = {0};
-Room rooms[MAX_ROOMS];
-Floor level_floor = {.width = MAP_W,
-                     .height = MAP_H,
+static TileWithFog map_data[MAP_H * MAP_W] = {0};
+static WallType walls[MAP_H * MAP_W] = {0};
+static Room rooms[MAX_ROOMS];
+static Floor level_floor = {.width = MAP_W,
+                            .height = MAP_H,
 
-                     .data = map_data,
-                     .walls = walls,
+                            .data = map_data,
+                            .walls = walls,
 
-                     .room_count = 0,
-                     .max_rooms = MAX_ROOMS,
-                     .rooms = rooms};
+                            .room_count = 0,
+                            .max_rooms = MAX_ROOMS,
+                            .rooms = rooms};
 
-World world = {0};
+static World world = {0};
 
 int main(int argc, char **argv) {
     // Ensure terminal is large enough

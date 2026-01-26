@@ -5,6 +5,18 @@
 
 #include "world.h"
 
+const char *equipment_slot_names[SLOT_COUNT] = {
+    [SLOT_HAND] = "Hand",
+    [SLOT_OFF_HAND] = "Off-Hand",
+    [SLOT_BODY] = "Body",
+};
+
+const char *equipment_slot_prepositions[SLOT_COUNT] = {
+    [SLOT_HAND] = "in",
+    [SLOT_OFF_HAND] = "in",
+    [SLOT_BODY] = "on",
+};
+
 void reset_equipment(Equipment *eq) {
     for (size_t i = 0; i < SLOT_COUNT; i++) {
         eq->equipped[i] = INVALID_ENTITY;

@@ -1,5 +1,6 @@
 #include "color.h"
 
+#include <assert.h>
 #include <ncurses.h>
 
 static short custom_color = COLOR_WHITE;

@@ -1,6 +1,9 @@
 CC      ?= gcc
 CFLAGS  += -Wall -Wextra -I"./include"
 LDFLAGS +=
+LDLIBS  += -lncursesw
+SRCS = rogue.c terminal.c color.c enemy.c floor.c game.c item.c systems.c utils.c world.c
+OBJS = $(SRCS:.c=.o)
 
 NCURSES_INC ?=
 NCURSES_LIB ?=
@@ -26,8 +29,11 @@ ifdef paint_roads
     CFLAGS += -DDEBUG_PAINT_ROADS
 endif
 
-rogue: rogue.c
-	$(CC) rogue.c terminal.c $(CFLAGS) $(LDFLAGS) -lncursesw -o $@
+rogue: $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $@ $(LDLIBS)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 release: CFLAGS += -O2 -DNDEBUG -flto -s -ffunction-sections -fdata-sections
 release: LDFLAGS += -Wl,--gc-sections
@@ -35,4 +41,4 @@ release: rogue
 
 .PHONY: clean
 clean:
-	rm -f rogue rogue.exe
+	rm -f rogue rogue.exe *.o

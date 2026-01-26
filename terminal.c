@@ -83,7 +83,7 @@ void ensure_terminal_size(int req_w, int req_h) {
 #endif
 
     int w, h;
-    for(;;) {
+    for (;;) {
         get_terminal_size(&w, &h);
 
         if (w >= req_w && h >= req_h) {

@@ -30,7 +30,111 @@
 // Maximum number of spawn slots
 #define MAX_SPAWN_SLOTS (MAX_ROOMS * MAX_DENSITY_TIER_2)
 
-static EnemyTemplate *select_enemy_for_depth(int floor_depth) {
+const EnemyTemplate enemy_templates[] = {
+    // Rat: Low HP, Low Atk, No Def. Common early game.
+    {
+        .name = "Rat",
+        .glyph = 'r',
+        .color = COLOR_PAIR_ENEMY_RAT,
+        .base_hp = 10,
+        .base_attack = 3,
+        .base_defense = 0,
+        .scale_factor = 0.5f,
+        .threat_cost = 1,
+        .min_depth = 1,
+        .base_weight = 100,
+        .depth_weight_mod = -2,
+        .ai = (AI){.aware = false, .detection_radius = 4},
+        .turn_delay = (TurnDelay){.delay = 2, .timer = 0},
+    },
+
+    // Goblin: Med HP, Med Atk, Low Def. Baseline enemy.
+    {
+        .name = "Goblin",
+        .glyph = 'g',
+        .color = COLOR_PAIR_ENEMY_GOBLIN,
+        .base_hp = 20,
+        .base_attack = 5,
+        .base_defense = 1,
+        .scale_factor = 1.0f,
+        .threat_cost = 3,
+        .min_depth = 1,
+        .base_weight = 60,
+        .depth_weight_mod = 1,
+        .ai = (AI){.aware = false, .detection_radius = 5},
+        .turn_delay = (TurnDelay){.delay = 3, .timer = 0},
+    },
+
+    // Bat: Very Low HP, Low Atk, No Def. Nuisance.
+    {
+        .name = "Bat",
+        .glyph = 'b',
+        .color = COLOR_PAIR_ENEMY_BAT,
+        .base_hp = 8,
+        .base_attack = 2,
+        .base_defense = 0,
+        .scale_factor = 0.4f,
+        .threat_cost = 1,
+        .min_depth = 1,
+        .base_weight = 40,
+        .depth_weight_mod = 0,
+        .ai = (AI){.aware = false, .detection_radius = 5},
+        .turn_delay = (TurnDelay){.delay = 1, .timer = 0},
+    },
+
+    // Snake: Low HP, High Atk, No Def. Starts floor 3.
+    {
+        .name = "Snake",
+        .glyph = 's',
+        .color = COLOR_PAIR_ENEMY_SNAKE,
+        .base_hp = 15,
+        .base_attack = 10,
+        .base_defense = 0,
+        .scale_factor = 1.2f,
+        .threat_cost = 4,
+        .min_depth = 3,
+        .base_weight = 20,
+        .depth_weight_mod = 2,
+        .ai = (AI){.aware = false, .detection_radius = 4},
+        .turn_delay = (TurnDelay){.delay = 2, .timer = 0},
+    },
+
+    // Orc: High HP, High Atk, Med Def. Starts floor 4.
+    {
+        .name = "Orc",
+        .glyph = 'O',
+        .color = COLOR_PAIR_ENEMY_ORC,
+        .base_hp = 35,
+        .base_attack = 8,
+        .base_defense = 3,
+        .scale_factor = 1.5f,
+        .threat_cost = 6,
+        .min_depth = 4,
+        .base_weight = 10,
+        .depth_weight_mod = 5,
+        .ai = (AI){.aware = false, .detection_radius = 5},
+        .turn_delay = (TurnDelay){.delay = 3, .timer = 0},
+    },
+
+    // Zombie: High HP, Low Atk, Low Def. Starts floor 5.
+    {
+        .name = "Zombie",
+        .glyph = 'Z',
+        .color = COLOR_PAIR_ENEMY_ZOMBIE,
+        .base_hp = 40,
+        .base_attack = 4,
+        .base_defense = 1,
+        .scale_factor = 1.3f,
+        .threat_cost = 5,
+        .min_depth = 5,
+        .base_weight = 5,
+        .depth_weight_mod = 5,
+        .ai = (AI){.aware = false, .detection_radius = 8},
+        .turn_delay = (TurnDelay){.delay = 4, .timer = 0},
+    },
+};
+
+static const EnemyTemplate *select_enemy_for_depth(int floor_depth) {
     int total_weight = 0;
     int weights[sizeof(enemy_templates) / sizeof(EnemyTemplate)];
     int count = sizeof(enemy_templates) / sizeof(EnemyTemplate);
@@ -67,7 +171,7 @@ static EnemyTemplate *select_enemy_for_depth(int floor_depth) {
 }
 
 static void spawn_single_enemy_at(World *world, Position pos, int floor_depth) {
-    EnemyTemplate *tmpl = select_enemy_for_depth(floor_depth);
+    const EnemyTemplate *tmpl = select_enemy_for_depth(floor_depth);
 
     // Calculate Scaled Stats
     float scale = tmpl->scale_factor;
@@ -163,7 +267,7 @@ void spawn_enemies_for_level(World *world) {
             continue;
         }
 
-        EnemyTemplate *tmpl = select_enemy_for_depth(floor_depth);
+        const EnemyTemplate *tmpl = select_enemy_for_depth(floor_depth);
 
         if (tmpl->threat_cost > threat_budget) {
             continue;

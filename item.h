@@ -3,6 +3,9 @@
 
 #include "ecs_base.h"
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #define MAX_INVENTORY (10)
 
 typedef struct {
@@ -18,17 +21,8 @@ typedef enum {
     SLOT_COUNT,
 } EquipmentSlot;
 
-static const char *equipment_slot_names[SLOT_COUNT] = {
-    [SLOT_HAND] = "Hand",
-    [SLOT_OFF_HAND] = "Off-Hand",
-    [SLOT_BODY] = "Body",
-};
-
-static const char *equipment_slot_prepositions[SLOT_COUNT] = {
-    [SLOT_HAND] = "in",
-    [SLOT_OFF_HAND] = "in",
-    [SLOT_BODY] = "on",
-};
+extern const char *equipment_slot_names[SLOT_COUNT];
+extern const char *equipment_slot_prepositions[SLOT_COUNT];
 
 typedef struct {
     Entity equipped[SLOT_COUNT];

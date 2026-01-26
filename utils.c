@@ -1,18 +1,7 @@
 #include "utils.h"
 
 #include <ctype.h>
-#include <stdlib.h>
 #include <string.h>
-
-int random_int(int min, int max) {
-    if (max < min)
-        return min;
-    return rand() % (max - min + 1) + min;
-}
-
-bool chance(float percentage) {
-    return ((float)rand() / (float)RAND_MAX) < percentage;
-}
 
 void shuffle_array(void *array, int n, size_t size) {
     char *arr = (char *)array; // Use char* for pointer arithmetic

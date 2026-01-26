@@ -2,3 +2,4 @@ rogue
 rogue.exe
 *.cast
 *.swp
+*.o

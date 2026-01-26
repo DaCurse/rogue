@@ -3,9 +3,18 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdlib.h>
 
-inline int random_int(int min, int max);
-inline bool chance(float percentage);
+static inline int random_int(int min, int max) {
+    if (max < min)
+        return min;
+    return rand() % (max - min + 1) + min;
+}
+
+static inline bool chance(float percentage) {
+    return ((float)rand() / (float)RAND_MAX) < percentage;
+}
+
 void shuffle_array(void *array, int n, size_t size);
 void filter_non_alpha(char *s);
 
