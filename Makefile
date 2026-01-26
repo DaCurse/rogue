@@ -3,10 +3,11 @@ CFLAGS  += -Wall -Wextra -I"./include"
 LDFLAGS +=
 
 NCURSES_INC ?=
-NCURSES_LIB ?= 
+NCURSES_LIB ?=
 
 ifeq ($(OS),Windows_NT)
     CFLAGS += -DNCURSES_STATIC -DNCURSES_WIDECHAR
+    LDFLAGS += -static -static-libgcc
 endif
 
 ifneq ($(NCURSES_INC),)
@@ -14,10 +15,9 @@ ifneq ($(NCURSES_INC),)
 endif
 
 ifneq ($(NCURSES_LIB),)
-	LDFLAGS += -L"$(NCURSES_LIB)"
+    LDFLAGS += -L"$(NCURSES_LIB)"
 endif
 
-# Debug configurations
 ifdef reveal_map
     CFLAGS += -DDEBUG_REVEAL_MAP
 endif
@@ -27,10 +27,10 @@ ifdef paint_roads
 endif
 
 rogue: rogue.c
-	$(CC) rogue.c $(CFLAGS) $(LDFLAGS) -lncurses -o $@
+	$(CC) rogue.c terminal.c $(CFLAGS) $(LDFLAGS) -lncursesw -o $@
 
-release: CFLAGS += -O2 -DNDEBUG
-release: LDFLAGS +=
+release: CFLAGS += -O2 -DNDEBUG -flto -s -ffunction-sections -fdata-sections
+release: LDFLAGS += -Wl,--gc-sections
 release: rogue
 
 .PHONY: clean

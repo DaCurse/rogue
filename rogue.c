@@ -12,6 +12,7 @@
 #include "game.h"
 #include "item.h"
 #include "systems.h"
+#include "terminal.h"
 #include "utils.h"
 #include "world.h"
 
@@ -38,7 +39,25 @@ WINDOW *create_window(int h, int w, int y, int x) {
     return win;
 }
 
+TileWithFog map_data[MAP_H * MAP_W] = {0};
+WallType walls[MAP_H * MAP_W] = {0};
+Room rooms[MAX_ROOMS];
+Floor level_floor = {.width = MAP_W,
+                     .height = MAP_H,
+
+                     .data = map_data,
+                     .walls = walls,
+
+                     .room_count = 0,
+                     .max_rooms = MAX_ROOMS,
+                     .rooms = rooms};
+
+World world = {0};
+
 int main(int argc, char **argv) {
+    // Ensure terminal is large enough
+    ensure_terminal_size(MAP_W, MAP_H + LOG_H + STATUS_H);
+
     unsigned int seed;
     if (argc > 1) {
         seed = (unsigned int)strtoul(argv[1], NULL, 10);
@@ -47,6 +66,7 @@ int main(int argc, char **argv) {
     }
     srand(seed);
 
+    // Initialize world and player
     char player_name[NAME_MAX_LENGTH];
     printf("What is your name, adventurer? ");
     if (fgets(player_name, sizeof(player_name), stdin) != NULL) {
@@ -56,51 +76,29 @@ int main(int argc, char **argv) {
         strcpy(player_name, PLAYER_DEFAULT_NAME);
     }
 
-    // Initialize floor
-    TileWithFog map_data[MAP_H * MAP_W] = {0};
-    WallType walls[MAP_H * MAP_W] = {0};
-    Room rooms[MAX_ROOMS];
-    Floor floor = {.width = MAP_W,
-                   .height = MAP_H,
-
-                   .data = map_data,
-                   .walls = walls,
-
-                   .room_count = 0,
-                   .max_rooms = MAX_ROOMS,
-                   .rooms = rooms};
+    world.seed = seed;
+    world.floor = &level_floor;
+    create_player(&world, player_name);
+    setup_new_level(&world);
 
     // Initialize ncurses
     initscr();
     init_colors();
 
-    if (LINES < MAP_H + STATUS_H + LOG_H || COLS < MAP_W) {
-        endwin();
-        fprintf(stderr, "Terminal too small: %dx%d\n", COLS, LINES);
-        fprintf(stderr, "Required: %dx%d\n", MAP_W, MAP_H + STATUS_H + LOG_H);
-        return 1;
-    }
+    WINDOW *log_win = create_window(LOG_H, world.floor->width, 0, 0);
+    WINDOW *map_win =
+        create_window(world.floor->height, world.floor->width, LOG_H, 0);
+    WINDOW *status_win = create_window(STATUS_H, world.floor->width,
+                                       world.floor->height + LOG_H, 0);
 
-    WINDOW *log_win = create_window(LOG_H, floor.width, 0, 0);
-    WINDOW *map_win = create_window(floor.height, floor.width, LOG_H, 0);
-    WINDOW *status_win =
-        create_window(STATUS_H, floor.width, floor.height + LOG_H, 0);
+    world.map.win = map_win;
+    world.log_window.win = log_win;
+    world.status_bar.win = status_win;
 
     keypad(map_win, true);
     noecho();
     cbreak();
     curs_set(0);
-
-    // Initialize world and player
-    World world = {0};
-    world.seed = seed;
-    world.floor = &floor;
-    create_player(&world, player_name);
-    setup_new_level(&world);
-
-    world.map.win = map_win;
-    world.log_window.win = log_win;
-    world.status_bar.win = status_win;
 
     // Main game loop
     for (;;) {
@@ -134,6 +132,13 @@ int main(int argc, char **argv) {
         printf("\nGame Over!\n");
         printf("%s reached Floor %d.\n", world.names[world.player].name,
                world.player_data.floor);
+
+#ifdef _WIN32
+        if (is_double_clicked()) {
+            printf("Press any key to exit...");
+            getchar();
+        }
+#endif
     }
 
     return 0;
